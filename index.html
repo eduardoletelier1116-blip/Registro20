@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Registro de Pesos</title>
+<style>
+body{font-family:Segoe UI;margin:0;background:#f4f6f9}
+header{
+  background:#1e3c72;
+  color:white;
+  padding:20px;
+  text-align:center;
+  font-size:22px;
+  position:relative;
+}
+
+.logo{
+  position:absolute;
+  left:20px;
+  top:50%;
+  transform:translateY(-50%);
+  height:50px;   /* tamaño del logo */
+}
+
+.codigo-empresa{
+  position:absolute;
+  right:20px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:14px;
+  font-weight:500;
+}
+
+.container{max-width:1200px;margin:20px auto;padding:20px}
+.card{background:white;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.08);margin-bottom:20px}
+input,select{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:1px solid #ddd}
+button{background:#2a5298;color:white;border:none;padding:10px;border-radius:6px;cursor:pointer}
+button:hover{background:#1e3c72}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#2a5298;color:white;padding:6px}
+td{padding:6px;border-bottom:1px solid #eee}
+.success{color:green;font-weight:bold}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="Fondo Blanco.jpg" class="logo" alt="Fresh-Pak">
+  Registro de Pesos
+  <div class="codigo-empresa">R02 POE 29</div>
+</header>
+
+
+<div class="container">
+
+<!-- LOGIN -->
+<div class="card" id="loginCard">
+<h3>Ingreso</h3>
+<input type="text" id="nombreOperador" placeholder="Nombre operador">
+<input type="password" id="claveOperador" placeholder="Clave operador">
+<button onclick="ingresarOperador()">Operador</button>
+<button onclick="modoVisualizacion()">Visualización</button>
+<p id="msgLogin" style="color:red;"></p>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<!-- FORMULARIO (solo operador) -->
+<div class="card" id="formCard">
+<h3>Nuevo Registro</h3>
+<form id="form">
+<input type="text" id="operador" readonly>
+<select id="exportadora" required>
+<option value="">Exportadora</option>
+<option>Fruclem</option>
+<option>JHB</option>
+<option>Talamaya</option>
+</select>
+<select id="categoria" required>
+<option value="">Categoría</option>
+<option>Premium</option>
+<option>Extra</option>
+<option>Fancy</option>
+<option>Choice</option>
+<option>Granel</option>
+</select>
+<select id="variedad" required>
+<option value="">Variedad</option>
+<option>Royal Gala</option>
+<option>Red Delicious</option>
+<option>Granny</option>
+<option>Fuji</option>
+<option>Pink Lady</option>
+</select>
+<select id="salida" required>
+<option value="">Salida</option>
+</select>
+<input type="text" id="calibre" placeholder="Calibre" required>
+<input type="text" id="lote" placeholder="Lote">
+<input type="text" id="peso" placeholder="Peso (kg)" required>
+<button type="submit">Guardar</button>
+<p id="msg" class="success"></p>
+</form>
+</div>
+
+<!-- REGISTROS -->
+<div class="card">
+<h3>Registros</h3>
+<input type="date" id="filtroFecha" onchange="cargarRegistros()">
+<table>
+<thead>
+<tr>
+<th>Fecha</th><th>Hora</th><th>Usuario</th><th>Exportadora</th>
+<th>Salida</th><th>Calibre</th><th>Categoria</th><th>Variedad</th><th>Lote</th><th>Peso</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+</div>
+
+</div> <!-- fin app -->
+
+</div> <!-- fin container -->
+
+// CAMPOS QUE QUEREMOS QUE SE MANTENGAN FIJOS ENTRE REGISTROS
+const camposFijos = ["exportadora", "lote", "variedad"];
+
+// Función para restaurar campos desde localStorage
+function restaurarCamposFijos() {
+  camposFijos.forEach(id => {
+    const valorGuardado = localStorage.getItem(id);
+    if (valorGuardado) {
+      document.getElementById(id).value = valorGuardado;
+    }
+  });
+}
+
+// Restaurar al cargar la página
+window.addEventListener("load", restaurarCamposFijos);
+
+// Guardar cambios automáticamente
+camposFijos.forEach(id => {
+  const elemento = document.getElementById(id);
+
+  // Para select y texto
+  elemento.addEventListener("change", function() {
+    localStorage.setItem(id, this.value);
+  });
+  elemento.addEventListener("input", function() {
+    localStorage.setItem(id, this.value);
+  });
+});
+
+// Restaurar los campos fijos después de guardar registro
+document.getElementById("form").addEventListener("submit", function(e){
+  e.preventDefault();
+  if(modoActual !== "operador") return;
+
+  const data = {
+    operador: nombreActual,
+    exportadora: document.getElementById("exportadora").value,
+    categoria: document.getElementById("categoria").value,
+    variedad: document.getElementById("variedad").value,
+    salida: document.getElementById("salida").value,
+    calibre: document.getElementById("calibre").value,
+    lote: document.getElementById("lote").value,
+    peso: document.getElementById("peso").value
+  };
+
+  if(!data.salida){
+    alert("Debe seleccionar una salida válida");
+    return;
+  }
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: new URLSearchParams(data)
+  })
+  .then(res => res.json())
+  .then(() => {
+    document.getElementById("msg").innerText = "Guardado correctamente";
+    form.reset();
+
+    // Restaurar los campos fijos después del reset
+    restaurarCamposFijos();
+
+    document.getElementById("operador").value = nombreActual;
+    setTimeout(cargarRegistros, 500);
+  })
+  .catch(err => console.error("Error guardando:", err));
+});
+
+</body>
+</html>
