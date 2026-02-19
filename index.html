@@ -210,57 +210,66 @@ document.getElementById("form").addEventListener("submit", function(e){
 });
 
 /* CARGAR REGISTROS */
-function cargarRegistros(){
+function cargarRegistros() {
   fetch(SCRIPT_URL)
-  .then(res => res.json())
-  .then(data => {
-    const tbody = document.getElementById("tabla");
-    tbody.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("tabla");
+      tbody.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
 
-    const filtro = document.getElementById("filtroFecha").value;
-    const today = new Date().toLocaleDateString("en-GB"); // Obtener la fecha de hoy en formato dd/mm/yyyy
+      const filtro = document.getElementById("filtroFecha").value;
+      const today = new Date();
+      const todayFormatted = today.toLocaleDateString("en-GB"); // Obtener la fecha de hoy en formato dd/mm/yyyy
 
-    // Si el filtro está vacío, solo mostrar registros del día actual
-    const recordsToShow = data.reverse().filter(row => {
-      const rowDate = new Date(row[0]).toLocaleDateString("en-GB");
+      // Verificar si el registro tiene la fecha en el formato correcto
+      const recordsToShow = data.reverse().filter(row => {
+        const rowDate = new Date(row[0]);
 
-      // Si hay filtro, mostrar solo los registros de la fecha seleccionada
-      if (filtro && rowDate !== filtro) return false;
+        // Si la fecha no es válida, omitirla
+        if (isNaN(rowDate)) {
+          return false;
+        }
 
-      // Si no hay filtro, mostrar solo los registros del día actual
-      if (!filtro && rowDate !== today) return false;
+        // Formatear la fecha del registro al formato dd/mm/yyyy
+        const rowDateFormatted = rowDate.toLocaleDateString("en-GB");
 
-      return true;
-    });
+        // Si hay filtro, mostrar solo los registros de la fecha seleccionada
+        if (filtro && rowDateFormatted !== filtro) return false;
 
-    // Si no hay registros del día, también puedes agregar un mensaje que lo indique
-    if (recordsToShow.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='10' style='text-align:center;'>No hay registros para hoy.</td></tr>";
-    } else {
-      // Agregar los registros filtrados a la tabla
-      recordsToShow.forEach(row => {
-        tbody.innerHTML += `
-        <tr>
-        <td>${row[0]}</td>
-        <td>${row[1]}</td>
-        <td>${row[2]}</td>
-        <td>${row[3]}</td>
-        <td>${row[4]}</td>
-        <td>${row[5]}</td>
-        <td>${row[6]}</td>
-        <td>${row[7]}</td>
-        <td>${row[8]}</td>
-        <td>${row[9]}</td>
-        </tr>
-        `;
+        // Si no hay filtro, mostrar solo los registros del día actual
+        if (!filtro && rowDateFormatted !== todayFormatted) return false;
+
+        return true;
       });
-    }
-  })
-  .catch(err => console.error("Error cargando registros:", err));
+
+      // Si no hay registros del día, también puedes agregar un mensaje que lo indique
+      if (recordsToShow.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='10' style='text-align:center;'>No hay registros para hoy.</td></tr>";
+      } else {
+        // Agregar los registros filtrados a la tabla
+        recordsToShow.forEach(row => {
+          tbody.innerHTML += `
+          <tr>
+          <td>${row[0]}</td>
+          <td>${row[1]}</td>
+          <td>${row[2]}</td>
+          <td>${row[3]}</td>
+          <td>${row[4]}</td>
+          <td>${row[5]}</td>
+          <td>${row[6]}</td>
+          <td>${row[7]}</td>
+          <td>${row[8]}</td>
+          <td>${row[9]}</td>
+          </tr>
+          `;
+        });
+      }
+    })
+    .catch(err => console.error("Error cargando registros:", err));
 }
 
 /* MODO VISUALIZACION */
-function modoVisualizacion(){
+function modoVisualizacion() {
   modoActual = "visualizacion";
   document.getElementById("loginCard").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
