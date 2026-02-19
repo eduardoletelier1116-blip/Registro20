@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Registro de Pesos</title>
-<style>
-body{font-family:Segoe UI;margin:0;background:#f4f6f9}
-header{
-  background:#1e3c72;
-  color:white;
-  padding:20px;
-  text-align:center;
-  font-size:22px;
-  position:relative;
-}
-.logo{
-  position:absolute;
-  left:20px;
-  top:50%;
-  transform:translateY(-50%);
-  height:50px;
-}
-.codigo-empresa{
-  position:absolute;
-  right:20px;
-  top:50%;
-  transform:translateY(-50%);
-  font-size:14px;
-  font-weight:500;
-}
-.container{max-width:1200px;margin:20px auto;padding:20px}
-.card{background:white;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.08);margin-bottom:20px}
-input,select{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:1px solid #ddd}
-button{background:#2a5298;color:white;border:none;padding:10px;border-radius:6px;cursor:pointer}
-button:hover{background:#1e3c72}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#2a5298;color:white;padding:6px}
-td{padding:6px;border-bottom:1px solid #eee}
-.success{color:green;font-weight:bold}
-.hidden{display:none}
-</style>
+  <meta charset="UTF-8">
+  <title>Registro de Pesos</title>
+  <style>
+    body{font-family:Segoe UI;margin:0;background:#f4f6f9}
+    header{
+      background:#1e3c72;
+      color:white;
+      padding:20px;
+      text-align:center;
+      font-size:22px;
+      position:relative;
+    }
+    .logo{
+      position:absolute;
+      left:20px;
+      top:50%;
+      transform:translateY(-50%);
+      height:50px;
+    }
+    .codigo-empresa{
+      position:absolute;
+      right:20px;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:14px;
+      font-weight:500;
+    }
+    .container{max-width:1200px;margin:20px auto;padding:20px}
+    .card{background:white;padding:20px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.08);margin-bottom:20px}
+    input,select{width:100%;padding:8px;margin:5px 0;border-radius:6px;border:1px solid #ddd}
+    button{background:#2a5298;color:white;border:none;padding:10px;border-radius:6px;cursor:pointer}
+    button:hover{background:#1e3c72}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{background:#2a5298;color:white;padding:6px}
+    td{padding:6px;border-bottom:1px solid #eee}
+    .success{color:green;font-weight:bold}
+    .hidden{display:none}
+  </style>
 </head>
 <body>
 
@@ -148,7 +148,6 @@ window.addEventListener("load", function(){
   if(lote)        document.getElementById("lote").value = lote;
 });
 
-/* LOGIN */
 function ingresarOperador(){
   const nombre = document.getElementById("nombreOperador").value.trim();
   const clave  = document.getElementById("claveOperador").value.trim();
@@ -165,7 +164,7 @@ function ingresarOperador(){
     document.getElementById("app").classList.remove("hidden");
     document.getElementById("formCard").classList.remove("hidden");
     document.getElementById("operador").value = nombreActual;
-    cargarRegistros();
+    cargarRegistros(true); // Cargar registros solo de hoy
     document.getElementById("salida").focus();
   } else {
     document.getElementById("msgLogin").innerText = "Clave incorrecta";
@@ -177,7 +176,7 @@ function modoVisualizacion(){
   document.getElementById("loginCard").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("formCard").classList.add("hidden");
-  cargarRegistros();
+  cargarRegistros(true); // Cargar registros solo de hoy
 }
 
 /* GUARDAR REGISTRO */
@@ -217,17 +216,16 @@ document.getElementById("form").addEventListener("submit", function(e){
     document.getElementById("salida").value = "";
 
     document.getElementById("operador").value = nombreActual;
-
     document.getElementById("salida").focus();
 
-    setTimeout(cargarRegistros, 400);
-
+    // Recargar los registros con el filtro de fecha hoy
+    cargarRegistros(true);
   })
   .catch(err => console.error("Error guardando:", err));
 });
 
 /* CARGAR REGISTROS */
-function cargarRegistros() {
+function cargarRegistros(filtrarPorFecha = false){
   fetch(SCRIPT_URL)
     .then(res => res.json())
     .then(data => {
@@ -238,9 +236,9 @@ function cargarRegistros() {
       const hoy = new Date();
       const fechaHoy = Utilities.formatDate(hoy, "America/Santiago", "dd/MM/yyyy");
 
-      // Filtrar registros por fecha de hoy
+      // Filtrar registros si filtrarPorFecha es verdadero
       data.reverse().forEach(row => {
-        if (row[0] !== fechaHoy) return;  // Filtramos solo por la fecha actual
+        if(filtrarPorFecha && row[0] !== fechaHoy) return;  // Filtramos solo por la fecha actual
 
         tbody.innerHTML += `
           <tr>
