@@ -168,47 +168,18 @@
     </div>
   </div>
 
+  <!-- Mover el script al final para asegurar que el DOM esté cargado -->
   <script>
-    // Definir la función modoVisualizacion correctamente
+    // Define las funciones correctamente antes de su uso
+
     function modoVisualizacion() {
       modoActual = "visualizacion";
       document.getElementById("loginCard").classList.add("hidden");
       document.getElementById("app").classList.remove("hidden");
       document.getElementById("formCard").classList.add("hidden");
-      
-      // Cargar registros automáticamente al ingresar en modo visualización
       cargarRegistros();
     }
 
-    const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxF8HChK2rtJMJv-Y_8aW0tePF7WWEFvspFGsb_Go9fdSTUz3VrA2AIe8BsqeLvZixK/exec";
-
-    // Cargar las opciones de "Salida"
-    const salidaSelect = document.getElementById("salida");
-    for (let i = 1; i <= 41; i++) {
-      let option = document.createElement("option");
-      option.value = i;
-      option.text = i;
-      salidaSelect.appendChild(option);
-    }
-
-    let modoActual = "visualizacion";
-    let nombreActual = "";
-
-    // Restaura valores persistentes
-    window.addEventListener("load", function () {
-      const exportadora = localStorage.getItem("exportadora");
-      const variedad = localStorage.getItem("variedad");
-      const lote = localStorage.getItem("lote");
-
-      if (exportadora) document.getElementById("exportadora").value = exportadora;
-      if (variedad) document.getElementById("variedad").value = variedad;
-      if (lote) document.getElementById("lote").value = lote;
-
-      // Cargar registros automáticamente al iniciar
-      cargarRegistros();
-    });
-
-    // Ingreso de operador
     function ingresarOperador() {
       const nombre = document.getElementById("nombreOperador").value.trim();
       const clave = document.getElementById("claveOperador").value.trim();
@@ -232,7 +203,32 @@
       }
     }
 
-    // Guardar registro
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCMDFwOxYxxWTROLrHNuzLogOr0F9Ll7QevHynNazMsczL_bgPd9fUNjgt5XcbV4c0/exec";
+
+    // Cargar las opciones de "Salida"
+    const salidaSelect = document.getElementById("salida");
+    for (let i = 1; i <= 41; i++) {
+      let option = document.createElement("option");
+      option.value = i;
+      option.text = i;
+      salidaSelect.appendChild(option);
+    }
+
+    let modoActual = "visualizacion";
+    let nombreActual = "";
+
+    window.addEventListener("load", function () {
+      const exportadora = localStorage.getItem("exportadora");
+      const variedad = localStorage.getItem("variedad");
+      const lote = localStorage.getItem("lote");
+
+      if (exportadora) document.getElementById("exportadora").value = exportadora;
+      if (variedad) document.getElementById("variedad").value = variedad;
+      if (lote) document.getElementById("lote").value = lote;
+
+      cargarRegistros();
+    });
+
     document.getElementById("form").addEventListener("submit", function (e) {
       e.preventDefault();
       if (modoActual !== "operador") return;
@@ -255,111 +251,85 @@
         .then((res) => res.json())
         .then(() => {
           document.getElementById("msg").innerText = "Guardado correctamente";
-
-          // Guardar campos persistentes
           localStorage.setItem("exportadora", data.exportadora);
           localStorage.setItem("variedad", data.variedad);
           localStorage.setItem("lote", data.lote);
-
-          // Limpiar solo campos variables
           document.getElementById("calibre").value = "";
           document.getElementById("peso").value = "";
           document.getElementById("categoria").value = "";
           document.getElementById("salida").value = "";
-
           document.getElementById("operador").value = nombreActual;
-
           document.getElementById("salida").focus();
-
-          // Actualizar registros después de guardar
           setTimeout(cargarRegistros, 400);
         })
         .catch((err) => console.error("Error guardando:", err));
     });
 
-<script>
-  /* CARGAR REGISTROS */
-  function cargarRegistros() {
-    fetch(SCRIPT_URL)
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById("tabla");
-        tbody.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
+    function cargarRegistros() {
+      fetch(SCRIPT_URL)
+        .then((res) => res.json())
+        .then((data) => {
+          const tbody = document.getElementById("tabla");
+          tbody.innerHTML = "";
+          const filtro = document.getElementById("filtroFecha").value;
+          const today = new Date();
+          const todayFormatted = today.toISOString().split("T")[0];
 
-        const filtro = document.getElementById("filtroFecha").value;
-        const today = new Date();
-        const todayFormatted = today.toISOString().split('T')[0]; // Obtener la fecha de hoy en formato yyyy-mm-dd
+          const recordsToShow = data.reverse().filter((row) => {
+            let rowDate = row[0];
+            console.log("Fecha del registro (raw):", rowDate);
 
-        console.log("Fecha de hoy:", todayFormatted); // Log de la fecha actual
+            if (!rowDate || rowDate.toString().trim() === "" || rowDate.toString() === "Fecha") {
+              console.log("Fecha vacía o inválida en el registro:", rowDate);
+              return false;
+            }
 
-        // Verificar si el registro tiene la fecha en el formato correcto
-        const recordsToShow = data.reverse().filter(row => {
-          let rowDate = row[0];
-          console.log("Fecha del registro (raw):", rowDate); // Log para ver la fecha tal como se recibe de Google Sheets
+            if (typeof rowDate === "string" || rowDate instanceof String) {
+              rowDate = new Date(rowDate);
+              if (isNaN(rowDate)) {
+                console.log("Fecha inválida en el registro:", rowDate);
+                return false;
+              }
+            }
 
-          // Si la fecha está vacía o no válida, omitimos el registro
-          if (!rowDate || rowDate.toString().trim() === "" || rowDate.toString() === "Fecha") {
-            console.log("Fecha vacía o inválida en el registro:", rowDate);
-            return false;
-          }
-
-          // Si la fecha es texto, intentamos convertirla a formato de fecha
-          if (typeof rowDate === 'string' || rowDate instanceof String) {
-            // Intenta parsear la fecha usando la función Date.parse()
-            rowDate = Date.parse(rowDate);  // Esto puede manejar formatos de fecha de texto
             if (isNaN(rowDate)) {
               console.log("Fecha inválida en el registro:", rowDate);
-              return false; // Omitir registros con fechas no válidas
+              return false;
             }
-            rowDate = new Date(rowDate);  // Convertir a objeto Date
-          }
 
-          // Verificar si la fecha es válida
-          if (isNaN(rowDate)) {
-            console.log("Fecha inválida en el registro:", rowDate);
-            return false; // Omitir registros con fechas no válidas
-          }
+            const rowDateFormatted = rowDate.toISOString().split("T")[0];
+            console.log("Fecha del registro (formateada):", rowDateFormatted);
 
-          // Formatear la fecha del registro al formato yyyy-mm-dd (estándar ISO)
-          const rowDateFormatted = rowDate.toISOString().split('T')[0];
+            if (filtro && rowDateFormatted !== filtro) return false;
+            if (!filtro && rowDateFormatted !== todayFormatted) return false;
 
-          console.log("Fecha del registro (formateada):", rowDateFormatted); // Log para ver la fecha formateada
-
-          // Si hay filtro, mostrar solo los registros de la fecha seleccionada
-          if (filtro && rowDateFormatted !== filtro) return false;
-
-          // Si no hay filtro, mostrar solo los registros del día actual
-          if (!filtro && rowDateFormatted !== todayFormatted) return false;
-
-          return true;
-        });
-
-        // Si no hay registros del día, también puedes agregar un mensaje que lo indique
-        if (recordsToShow.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='10' style='text-align:center;'>No hay registros para hoy.</td></tr>";
-        } else {
-          // Agregar los registros filtrados a la tabla
-          recordsToShow.forEach(row => {
-            tbody.innerHTML += `
-              <tr>
-                <td>${row[0]}</td>
-                <td>${row[1]}</td>
-                <td>${row[2]}</td>
-                <td>${row[3]}</td>
-                <td>${row[4]}</td>
-                <td>${row[5]}</td>
-                <td>${row[6]}</td>
-                <td>${row[7]}</td>
-                <td>${row[8]}</td>
-                <td>${row[9]}</td>
-              </tr>
-            `;
+            return true;
           });
-        }
-      })
-      .catch(err => console.error("Error cargando registros:", err));
-  }
-</script>
+
+          if (recordsToShow.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='10' style='text-align:center;'>No hay registros para hoy.</td></tr>";
+          } else {
+            recordsToShow.forEach((row) => {
+              tbody.innerHTML += `
+                <tr>
+                  <td>${row[0]}</td>
+                  <td>${row[1]}</td>
+                  <td>${row[2]}</td>
+                  <td>${row[3]}</td>
+                  <td>${row[4]}</td>
+                  <td>${row[5]}</td>
+                  <td>${row[6]}</td>
+                  <td>${row[7]}</td>
+                  <td>${row[8]}</td>
+                  <td>${row[9]}</td>
+                </tr>
+              `;
+            });
+          }
+        })
+        .catch((err) => console.error("Error cargando registros:", err));
+    }
+  </script>
 
 </body>
 </html>
