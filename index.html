@@ -201,7 +201,6 @@ document.getElementById("form").addEventListener("submit", function(e){
   })
   .then(res => res.json())
   .then(() => {
-
     document.getElementById("msg").innerText = "Guardado correctamente";
 
     /* GUARDAR CAMPOS PERSISTENTES */
@@ -215,50 +214,4 @@ document.getElementById("form").addEventListener("submit", function(e){
     document.getElementById("categoria").value = "";
     document.getElementById("salida").value = "";
 
-    document.getElementById("operador").value = nombreActual;
-    document.getElementById("salida").focus();
-
-    // Recargar los registros con el filtro de fecha hoy
-    cargarRegistros(true);
-  })
-  .catch(err => console.error("Error guardando:", err));
-});
-
-/* CARGAR REGISTROS */
-function cargarRegistros(filtrarPorFecha = false){
-  fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(data => {
-      const tbody = document.getElementById("tabla");
-      tbody.innerHTML = "";
-
-      // Obtener la fecha de hoy en el formato dd/MM/yyyy
-      const hoy = new Date();
-      const fechaHoy = Utilities.formatDate(hoy, "America/Santiago", "dd/MM/yyyy");
-
-      // Filtrar registros si filtrarPorFecha es verdadero
-      data.reverse().forEach(row => {
-        if(filtrarPorFecha && row[0] !== fechaHoy) return;  // Filtramos solo por la fecha actual
-
-        tbody.innerHTML += `
-          <tr>
-            <td>${row[0]}</td>
-            <td>${row[1]}</td>
-            <td>${row[2]}</td>
-            <td>${row[3]}</td>
-            <td>${row[4]}</td>
-            <td>${row[5]}</td>
-            <td>${row[6]}</td>
-            <td>${row[7]}</td>
-            <td>${row[8]}</td>
-            <td>${row[9]}</td>
-          </tr>
-        `;
-      });
-    })
-    .catch(err => console.error("Error cargando registros:", err));
-}
-
-</script>
-</body>
-</html>
+    do
