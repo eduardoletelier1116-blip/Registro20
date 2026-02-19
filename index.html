@@ -277,66 +277,80 @@
         .catch((err) => console.error("Error guardando:", err));
     });
 
-    // Cargar registros
-    function cargarRegistros() {
-      fetch(SCRIPT_URL)
-        .then((res) => res.json())
-        .then((data) => {
-          const tbody = document.getElementById("tabla");
-          tbody.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
+<script>
+  /* CARGAR REGISTROS */
+  function cargarRegistros() {
+    fetch(SCRIPT_URL)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById("tabla");
+        tbody.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
 
-          const filtro = document.getElementById("filtroFecha").value;
-          const today = new Date();
-          const todayFormatted = today.toISOString().split("T")[0]; // Obtener la fecha de hoy en formato yyyy-mm-dd
+        const filtro = document.getElementById("filtroFecha").value;
+        const today = new Date();
+        const todayFormatted = today.toISOString().split('T')[0]; // Obtener la fecha de hoy en formato yyyy-mm-dd
 
-          // Verificar si el registro tiene la fecha en el formato correcto
-          const recordsToShow = data.reverse().filter((row) => {
-            const rowDate = new Date(row[0]);
+        console.log("Fecha de hoy:", todayFormatted); // Log de la fecha actual
 
-            // Comprobamos si la fecha es válida
-            if (isNaN(rowDate)) {
-              console.log("Fecha inválida en el registro:", row[0]);
-              return false; // Omitir registros con fechas inválidas
-            }
+        // Verificar si el registro tiene la fecha en el formato correcto
+        const recordsToShow = data.reverse().filter(row => {
+          const rowDate = row[0];
 
-            // Formatear la fecha del registro al formato yyyy-mm-dd (estándar ISO)
-            const rowDateFormatted = rowDate.toISOString().split("T")[0];
-
-            // Si hay filtro, mostrar solo los registros de la fecha seleccionada
-            if (filtro && rowDateFormatted !== filtro) return false;
-
-            // Si no hay filtro, mostrar solo los registros del día actual
-            if (!filtro && rowDateFormatted !== todayFormatted) return false;
-
-            return true;
-          });
-
-          // Si no hay registros del día, también puedes agregar un mensaje que lo indique
-          if (recordsToShow.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='10' style='text-align:center;'>No hay registros para hoy.</td></tr>";
-          } else {
-            // Agregar los registros filtrados a la tabla
-            recordsToShow.forEach((row) => {
-              tbody.innerHTML += `
-                <tr>
-                  <td>${row[0]}</td>
-                  <td>${row[1]}</td>
-                  <td>${row[2]}</td>
-                  <td>${row[3]}</td>
-                  <td>${row[4]}</td>
-                  <td>${row[5]}</td>
-                  <td>${row[6]}</td>
-                  <td>${row[7]}</td>
-                  <td>${row[8]}</td>
-                  <td>${row[9]}</td>
-                </tr>
-              `;
-            });
+          // Verificar si la fecha está vacía o no válida
+          if (!rowDate || rowDate.toString().trim() === "" || rowDate.toString() === "Fecha") {
+            console.log("Fecha vacía o inválida en el registro:", rowDate);
+            return false; // Omitir registros con fechas vacías o inválidas
           }
-        })
-        .catch((err) => console.error("Error cargando registros:", err));
-    }
-  </script>
+
+          // Convertir la fecha a formato Date
+          const parsedDate = new Date(rowDate);
+
+          // Verificar si la fecha es válida
+          if (isNaN(parsedDate)) {
+            console.log("Fecha inválida en el registro:", rowDate);
+            return false; // Omitir registros con fechas no válidas
+          }
+
+          // Formatear la fecha del registro al formato yyyy-mm-dd (estándar ISO)
+          const rowDateFormatted = parsedDate.toISOString().split('T')[0];
+
+          console.log("Fecha del registro:", rowDateFormatted); // Log de la fecha del registro
+
+          // Si hay filtro, mostrar solo los registros de la fecha seleccionada
+          if (filtro && rowDateFormatted !== filtro) return false;
+
+          // Si no hay filtro, mostrar solo los registros del día actual
+          if (!filtro && rowDateFormatted !== todayFormatted) return false;
+
+          return true;
+        });
+
+        // Si no hay registros del día, también puedes agregar un mensaje que lo indique
+        if (recordsToShow.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='10' style='text-align:center;'>No hay registros para hoy.</td></tr>";
+        } else {
+          // Agregar los registros filtrados a la tabla
+          recordsToShow.forEach(row => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${row[0]}</td>
+                <td>${row[1]}</td>
+                <td>${row[2]}</td>
+                <td>${row[3]}</td>
+                <td>${row[4]}</td>
+                <td>${row[5]}</td>
+                <td>${row[6]}</td>
+                <td>${row[7]}</td>
+                <td>${row[8]}</td>
+                <td>${row[9]}</td>
+              </tr>
+            `;
+          });
+        }
+      })
+      .catch(err => console.error("Error cargando registros:", err));
+  }
+</script>
 
 </body>
 </html>
