@@ -219,7 +219,7 @@ function cargarRegistros() {
 
       const filtro = document.getElementById("filtroFecha").value;
       const today = new Date();
-      const todayFormatted = today.toLocaleDateString("en-GB"); // Obtener la fecha de hoy en formato dd/mm/yyyy
+      const todayFormatted = today.toISOString().split('T')[0]; // Obtener la fecha de hoy en formato yyyy-mm-dd
 
       // Verificar si el registro tiene la fecha en el formato correcto
       const recordsToShow = data.reverse().filter(row => {
@@ -230,8 +230,8 @@ function cargarRegistros() {
           return false;
         }
 
-        // Formatear la fecha del registro al formato dd/mm/yyyy
-        const rowDateFormatted = rowDate.toLocaleDateString("en-GB");
+        // Formatear la fecha del registro al formato yyyy-mm-dd (estándar ISO)
+        const rowDateFormatted = rowDate.toISOString().split('T')[0];
 
         // Si hay filtro, mostrar solo los registros de la fecha seleccionada
         if (filtro && rowDateFormatted !== filtro) return false;
@@ -266,6 +266,17 @@ function cargarRegistros() {
       }
     })
     .catch(err => console.error("Error cargando registros:", err));
+}
+
+/* MODO VISUALIZACION */
+function modoVisualizacion() {
+  modoActual = "visualizacion";
+  document.getElementById("loginCard").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("formCard").classList.add("hidden");
+  
+  // Cargar registros automáticamente al ingresar en modo visualización
+  cargarRegistros();
 }
 
 /* MODO VISUALIZACION */
