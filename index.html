@@ -209,37 +209,46 @@ document.getElementById("form").addEventListener("submit", function(e){
   .catch(err => console.error("Error guardando:", err));
 });
 
-// Función para cargar registros
-function cargarRegistros(filtrarPorFecha = false){
+/* CARGAR REGISTROS */
+function cargarRegistros(){
   fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(data => {
-      const tbody = document.getElementById("tabla");
-      tbody.innerHTML = "";
+  .then(res => res.json())
+  .then(data => {
+    const tbody = document.getElementById("tabla");
+    tbody.innerHTML = "";
 
-      const hoy = new Date();
-      const fechaHoy = hoy.toLocaleDateString("es-CL");
+    const filtro = document.getElementById("filtroFecha").value;
+    const today = new Date().toLocaleDateString("en-GB"); // Obtener la fecha de hoy en formato dd/mm/yyyy
 
-      data.reverse().forEach(row => {
-        if(filtrarPorFecha && row[0] !== fechaHoy) return;
+    data.reverse().forEach(row => {
+      const rowDate = row[0]; // Suponiendo que la fecha está en la primera columna (index 0)
 
-        tbody.innerHTML += `
-          <tr>
-            <td>${row[0]}</td>
-            <td>${row[1]}</td>
-            <td>${row[2]}</td>
-            <td>${row[3]}</td>
-            <td>${row[4]}</td>
-            <td>${row[5]}</td>
-            <td>${row[6]}</td>
-            <td>${row[7]}</td>
-            <td>${row[8]}</td>
-            <td>${row[9]}</td>
-          </tr>
-        `;
-      });
-    })
-    .catch(err => console.error("Error cargando registros:", err));
+      // Formatear la fecha de registro para asegurarse de que tenga el formato correcto
+      const rowDateFormatted = new Date(rowDate).toLocaleDateString("en-GB");
+
+      // Si hay un filtro de fecha, filtra por él
+      if(filtro && rowDateFormatted !== filtro) return;
+
+      // Si no hay filtro, solo muestra los registros del día actual
+      if (!filtro && rowDateFormatted !== today) return;
+
+      tbody.innerHTML += `
+      <tr>
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td>${row[4]}</td>
+      <td>${row[5]}</td>
+      <td>${row[6]}</td>
+      <td>${row[7]}</td>
+      <td>${row[8]}</td>
+      <td>${row[9]}</td>
+      </tr>
+      `;
+    });
+  })
+  .catch(err => console.error("Error cargando registros:", err));
 }
 
 </script>
