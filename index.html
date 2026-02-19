@@ -294,27 +294,28 @@
 
         // Verificar si el registro tiene la fecha en el formato correcto
         const recordsToShow = data.reverse().filter(row => {
-          const rowDate = row[0];
+          let rowDate = row[0];
+          console.log("Fecha del registro (raw):", rowDate); // Log para ver la fecha tal como se recibe de Google Sheets
 
-          // Verificar si la fecha está vacía o no válida
+          // Si la fecha está vacía o no válida, omitimos el registro
           if (!rowDate || rowDate.toString().trim() === "" || rowDate.toString() === "Fecha") {
             console.log("Fecha vacía o inválida en el registro:", rowDate);
-            return false; // Omitir registros con fechas vacías o inválidas
+            return false;
           }
 
-          // Convertir la fecha a formato Date
-          const parsedDate = new Date(rowDate);
+          // Intentar convertir la fecha, incluso si está en formato texto
+          rowDate = new Date(rowDate);
 
           // Verificar si la fecha es válida
-          if (isNaN(parsedDate)) {
+          if (isNaN(rowDate)) {
             console.log("Fecha inválida en el registro:", rowDate);
             return false; // Omitir registros con fechas no válidas
           }
 
           // Formatear la fecha del registro al formato yyyy-mm-dd (estándar ISO)
-          const rowDateFormatted = parsedDate.toISOString().split('T')[0];
+          const rowDateFormatted = rowDate.toISOString().split('T')[0];
 
-          console.log("Fecha del registro:", rowDateFormatted); // Log de la fecha del registro
+          console.log("Fecha del registro (formateada):", rowDateFormatted); // Log para ver la fecha formateada
 
           // Si hay filtro, mostrar solo los registros de la fecha seleccionada
           if (filtro && rowDateFormatted !== filtro) return false;
