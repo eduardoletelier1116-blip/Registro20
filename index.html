@@ -277,7 +277,7 @@
         .catch((err) => console.error("Error guardando:", err));
     });
 
-  <script>
+<script>
   /* CARGAR REGISTROS */
   function cargarRegistros() {
     fetch(SCRIPT_URL)
@@ -305,12 +305,13 @@
 
           // Si la fecha es texto, intentamos convertirla a formato de fecha
           if (typeof rowDate === 'string' || rowDate instanceof String) {
-            rowDate = new Date(rowDate);
-            // Si sigue siendo una fecha inválida, retornamos falso
+            // Intenta parsear la fecha usando la función Date.parse()
+            rowDate = Date.parse(rowDate);  // Esto puede manejar formatos de fecha de texto
             if (isNaN(rowDate)) {
               console.log("Fecha inválida en el registro:", rowDate);
-              return false;
+              return false; // Omitir registros con fechas no válidas
             }
+            rowDate = new Date(rowDate);  // Convertir a objeto Date
           }
 
           // Verificar si la fecha es válida
