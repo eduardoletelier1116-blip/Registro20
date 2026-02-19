@@ -244,17 +244,22 @@ function cargarRegistros(){
     const today = new Date();
     const todayFormatted = today.toISOString().split('T')[0]; // Obtener la fecha de hoy en formato yyyy-mm-dd
 
+    console.log("Fecha de hoy:", todayFormatted); // Log de la fecha actual
+
     // Verificar si el registro tiene la fecha en el formato correcto
     const recordsToShow = data.reverse().filter(row => {
       const rowDate = new Date(row[0]);
 
-      // Si la fecha no es válida, omitirla
+      // Comprobamos si la fecha es válida
       if (isNaN(rowDate)) {
-        return false;
+        console.log("Fecha inválida en el registro:", row[0]);
+        return false; // Omitir registros con fechas inválidas
       }
 
       // Formatear la fecha del registro al formato yyyy-mm-dd (estándar ISO)
       const rowDateFormatted = rowDate.toISOString().split('T')[0];
+
+      console.log("Fecha del registro:", rowDateFormatted); // Log de la fecha del registro
 
       // Si hay filtro, mostrar solo los registros de la fecha seleccionada
       if (filtro && rowDateFormatted !== filtro) return false;
