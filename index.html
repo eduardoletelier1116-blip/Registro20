@@ -215,23 +215,26 @@ function cargarRegistros(){
   .then(res => res.json())
   .then(data => {
     const tbody = document.getElementById("tabla");
-    tbody.innerHTML = "";
+    tbody.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
 
     const filtro = document.getElementById("filtroFecha").value;
     const today = new Date().toLocaleDateString("en-GB"); // Obtener la fecha de hoy en formato dd/mm/yyyy
 
-    data.reverse().forEach(row => {
-      const rowDate = row[0]; // Suponiendo que la fecha está en la primera columna (index 0)
+    // Si el filtro está vacío, solo mostrar registros del día actual
+    const recordsToShow = data.reverse().filter(row => {
+      const rowDate = new Date(row[0]).toLocaleDateString("en-GB");
 
-      // Formatear la fecha de registro para asegurarse de que tenga el formato correcto
-      const rowDateFormatted = new Date(rowDate).toLocaleDateString("en-GB");
+      // Si hay filtro, mostrar solo los registros de la fecha seleccionada
+      if (filtro && rowDate !== filtro) return false;
 
-      // Si hay un filtro de fecha, filtra por él
-      if(filtro && rowDateFormatted !== filtro) return;
+      // Si no hay filtro, mostrar solo los registros del día actual
+      if (!filtro && rowDate !== today) return false;
 
-      // Si no hay filtro, solo muestra los registros del día actual
-      if (!filtro && rowDateFormatted !== today) return;
+      return true;
+    });
 
+    // Agregar los registros filtrados a la tabla
+    recordsToShow.forEach(row => {
       tbody.innerHTML += `
       <tr>
       <td>${row[0]}</td>
@@ -250,6 +253,52 @@ function cargarRegistros(){
   })
   .catch(err => console.error("Error cargando registros:", err));
 }
+
+/* GUARDAR REGISTRO */
+document.getElementById("form").addEventListener("submit", function(e){
+  e.preventDefault();
+  if(modoActual !== "operador") return;
+
+  const data = {
+    operador: nombreActual,
+    exportadora: document.getElementById("exportadora").value,
+    salida: document.getElementById("salida").value,
+    calibre: document.getElementById("calibre").value,
+    categoria: document.getElementById("categoria").value,
+    variedad: document.getElementById("variedad").value,
+    lote: document.getElementById("lote").value,
+    peso: document.getElementById("peso").value
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: new URLSearchParams(data)
+  })
+  .then(res => res.json())
+  .then(() => {
+    document.getElementById("msg").innerText = "Guardado correctamente";
+
+    /* GUARDAR CAMPOS PERSISTENTES */
+    localStorage.setItem("exportadora", data.exportadora);
+    localStorage.setItem("variedad", data.variedad);
+    localStorage.setItem("lote", data.lote);
+
+    /* LIMPIAR SOLO CAMPOS VARIABLES */
+    document.getElementById("calibre").value = "";
+    document.getElementById("peso").value = "";
+    document.getElementById("categoria").value = "";
+    document.getElementById("salida").value = "";
+
+    document.getElementById("operador").value = nombreActual;
+
+    document.getElementById("salida").focus();
+
+    // Actualizar registros después de guardar
+    setTimeout(cargarRegistros, 400);
+
+  })
+  .catch(err => console.error("Error guardando:", err));
+});
 
 </script>
 </body>
