@@ -290,6 +290,17 @@ function modoVisualizacion() {
   cargarRegistros();
 }
 
+/* MODO VISUALIZACION */
+function modoVisualizacion() {
+  modoActual = "visualizacion";
+  document.getElementById("loginCard").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("formCard").classList.add("hidden");
+  
+  // Cargar registros automáticamente al ingresar en modo visualización
+  cargarRegistros();
+}
+
 /* GUARDAR REGISTRO */
 document.getElementById("form").addEventListener("submit", function(e){
   e.preventDefault();
