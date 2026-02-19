@@ -124,7 +124,6 @@
 
 <script>
 
-// Definir la URL de Google Apps Script
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxF8HChK2rtJMJv-Y_8aW0tePF7WWEFvspFGsb_Go9fdSTUz3VrA2AIe8BsqeLvZixK/exec";
 
 const salidaSelect = document.getElementById("salida");
@@ -138,7 +137,7 @@ for(let i=1;i<=41;i++){
 let modoActual = "visualizacion";
 let nombreActual = "";
 
-// Función de ingreso del operador
+// Función para ingresar como operador
 function ingresarOperador(){
   const nombre = document.getElementById("nombreOperador").value.trim();
   const clave  = document.getElementById("claveOperador").value.trim();
@@ -162,7 +161,7 @@ function ingresarOperador(){
   }
 }
 
-// Función de ingreso al modo visualización
+// Función de visualización
 function modoVisualizacion(){
   modoActual = "visualizacion";
   document.getElementById("loginCard").classList.add("hidden");
@@ -195,19 +194,22 @@ document.getElementById("form").addEventListener("submit", function(e){
   .then(() => {
     document.getElementById("msg").innerText = "Guardado correctamente";
 
-    // Limpiar campos
+    // Limpiar campos después de guardar
     document.getElementById("calibre").value = "";
     document.getElementById("peso").value = "";
     document.getElementById("categoria").value = "";
     document.getElementById("salida").value = "";
 
-    // Recargar registros
-    cargarRegistros(true);
+    // Recargar todos los registros
+    setTimeout(() => {
+      cargarRegistros(false); // Recargar todos los registros primero
+      setTimeout(() => cargarRegistros(true), 500); // Filtrar registros por fecha actual
+    }, 500);
   })
   .catch(err => console.error("Error guardando:", err));
 });
 
-// Función para cargar los registros
+// Función para cargar registros
 function cargarRegistros(filtrarPorFecha = false){
   fetch(SCRIPT_URL)
     .then(res => res.json())
