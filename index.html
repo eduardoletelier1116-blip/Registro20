@@ -279,37 +279,39 @@
           .catch(err => console.error("Error guardando:", err));
       });
 
-      /* CARGAR REGISTROS */
-      function cargarRegistros() {
-        fetch(SCRIPT_URL)
-          .then(res => res.json())
-          .then(data => {
-            const tbody = document.getElementById("tabla");
-            tbody.innerHTML = "";
+/* CARGAR REGISTROS */
+function cargarRegistros() {
+  fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("tabla");
+      tbody.innerHTML = "";
 
-            const filtro = document.getElementById("filtroFecha").value;
+      const fechaHoy = new Date().toLocaleDateString("es-CL"); // Fecha de hoy en formato 'dd/MM/yyyy'
 
-            data.reverse().forEach(row => {
-              if (filtro && row[0] !== filtro) return;
-
-              tbody.innerHTML += `
-                <tr>
-                  <td>${row[0]}</td>
-                  <td>${row[1]}</td>
-                  <td>${row[2]}</td>
-                  <td>${row[3]}</td>
-                  <td>${row[4]}</td>
-                  <td>${row[5]}</td>
-                  <td>${row[6]}</td>
-                  <td>${row[7]}</td>
-                  <td>${row[8]}</td>
-                  <td>${row[9]}</td>
-                </tr>
-              `;
-            });
-          })
-          .catch(err => console.error("Error cargando registros:", err));
-      }
+      // Filtramos los registros solo para mostrar los del día de hoy
+      data.reverse().forEach(row => {
+        const fechaRegistro = row[0]; // La fecha está en la primera columna (índice 0)
+        if (fechaRegistro === fechaHoy) {
+          tbody.innerHTML += `
+            <tr>
+              <td>${row[0]}</td>
+              <td>${row[1]}</td>
+              <td>${row[2]}</td>
+              <td>${row[3]}</td>
+              <td>${row[4]}</td>
+              <td>${row[5]}</td>
+              <td>${row[6]}</td>
+              <td>${row[7]}</td>
+              <td>${row[8]}</td>
+              <td>${row[9]}</td>
+            </tr>
+          `;
+        }
+      });
+    })
+    .catch(err => console.error("Error cargando registros:", err));
+}
     </script>
   </body>
 </html>
