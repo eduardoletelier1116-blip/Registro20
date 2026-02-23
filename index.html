@@ -243,6 +243,11 @@
             localStorage.setItem("exportadora", data.exportadora);
             localStorage.setItem("variedad", data.variedad);
             localStorage.setItem("lote", data.lote);
+
+            // Actualizar los campos con los datos guardados
+            document.getElementById("exportadora").value = data.exportadora;
+            document.getElementById("variedad").value = data.variedad;
+            document.getElementById("lote").value = data.lote;
           })
           .catch(err => console.error("Error guardando:", err));
       });
