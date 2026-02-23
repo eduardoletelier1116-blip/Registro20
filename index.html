@@ -208,6 +208,8 @@
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("formCard").classList.remove("hidden");
           cargarDatosPrevios(); // Cargar los datos previos del último registro
+          // Guardar nombre del operador en localStorage
+          localStorage.setItem("nombreOperador", nombre);
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
@@ -239,7 +241,6 @@
             cargarRegistros();  // Recargar los registros del día actual después de guardar
 
             // Guardar los datos del último registro en localStorage
-            localStorage.setItem("operador", nombreActual);
             localStorage.setItem("exportadora", data.exportadora);
             localStorage.setItem("variedad", data.variedad);
             localStorage.setItem("lote", data.lote);
@@ -292,7 +293,7 @@
 
       // Cargar los datos previos del último registro
       function cargarDatosPrevios() {
-        const operador = localStorage.getItem("operador");
+        const operador = localStorage.getItem("nombreOperador");
         const exportadora = localStorage.getItem("exportadora");
         const variedad = localStorage.getItem("variedad");
         const lote = localStorage.getItem("lote");
