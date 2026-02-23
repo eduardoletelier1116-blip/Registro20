@@ -100,25 +100,25 @@
     </style>
   </head>
 
-<body>
-  <header>
-    <img src="Fondo Blanco.jpg" class="logo" alt="Fresh-Pak">
-    Registro de Pesos
-    <div class="codigo-empresa">R02 POE 29</div>
-  </header>
+  <body>
+    <header>
+      <img src="Fondo Blanco.jpg" class="logo" alt="Fresh-Pak">
+      Registro de Pesos
+      <div class="codigo-empresa">R02 POE 29</div>
+    </header>
 
-  <div class="container">
-    <div class="card" id="loginCard">
-      <h3>Ingreso</h3>
-      <input type="text" id="nombreOperador" placeholder="Nombre operador">
-      <input type="password" id="claveOperador" placeholder="Clave operador">
-      <button onclick="ingresarOperador()">Operador</button>
-      <p id="msgLogin" style="color:red;"></p>
-    </div>
+    <div class="container">
+      <!-- Login Card -->
+      <div class="card" id="loginCard">
+        <h3>Ingreso</h3>
+        <input type="text" id="nombreOperador" placeholder="Nombre operador">
+        <input type="password" id="claveOperador" placeholder="Clave operador">
+        <button onclick="ingresarOperador()">Operador</button>
+        <p id="msgLogin" style="color:red;"></p>
+      </div>
 
-    <!-- Ahora los registros se mostrarán en la pantalla principal, debajo del login -->
-    <div id="app">
-      <div class="card" id="formCard">
+      <!-- Form Card (hidden until operator logs in) -->
+      <div class="card hidden" id="formCard">
         <h3>Nuevo Registro</h3>
         <form id="form">
           <input type="text" id="operador" readonly>
@@ -155,7 +155,7 @@
         </form>
       </div>
 
-      <!-- Los registros estarán aquí, visibles desde el inicio -->
+      <!-- Registro de Pesos Card -->
       <div class="card">
         <h3>Registros</h3>
         <table>
@@ -177,8 +177,6 @@
         </table>
       </div>
     </div>
-  </div>
-</body>
 
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpq6k7t7izq1zHok-67xHJHPw371CdcrbdLS0AM2IDXqG1d13UySpLHO4E2GS0c001/exec";
@@ -191,19 +189,7 @@
         salidaSelect.appendChild(option);
       }
 
-      let modoActual = "visualizacion";
       let nombreActual = "";
-
-      /* RESTAURAR VALORES GUARDADOS */
-      window.addEventListener("load", function () {
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
-      });
 
       /* LOGIN */
       function ingresarOperador() {
@@ -216,32 +202,19 @@
         }
 
         if (clave === "fresh") {
-          modoActual = "operador";
           nombreActual = nombre;
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("app").classList.remove("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
           document.getElementById("operador").value = nombreActual;
-          cargarRegistros();
-          document.getElementById("salida").focus();
+          cargarRegistros(); // Cargar los registros del día actual
+          document.getElementById("loginCard").classList.add("hidden");
+          document.getElementById("formCard").classList.remove("hidden");
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
       }
 
-      function modoVisualizacion() {
-        modoActual = "visualizacion";
-        document.getElementById("loginCard").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        document.getElementById("formCard").classList.add("hidden");
-        cargarRegistros();
-      }
-
       /* GUARDAR REGISTRO */
       document.getElementById("form").addEventListener("submit", function (e) {
         e.preventDefault();
-
-        if (modoActual !== "operador") return;
 
         const data = {
           operador: nombreActual,
@@ -261,65 +234,49 @@
           .then(res => res.json())
           .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
-
-            /* GUARDAR CAMPOS PERSISTENTES */
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
-
-            /* LIMPIAR SOLO CAMPOS VARIABLES */
-            document.getElementById("calibre").value = "";
-            document.getElementById("peso").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("salida").value = "";
-            document.getElementById("operador").value = nombreActual;
-            document.getElementById("salida").focus();
-
-            setTimeout(cargarRegistros, 400);
+            document.getElementById("form").reset();
+            cargarRegistros();  // Recargar los registros del día actual después de guardar
           })
           .catch(err => console.error("Error guardando:", err));
       });
 
-/* CARGAR REGISTROS */
-function cargarRegistros() {
-  fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(data => {
-      const tbody = document.getElementById("tabla");
-      tbody.innerHTML = "";
+      /* CARGAR REGISTROS */
+      function cargarRegistros() {
+        fetch(SCRIPT_URL)
+          .then(res => res.json())
+          .then(data => {
+            const tbody = document.getElementById("tabla");
+            tbody.innerHTML = "";
 
-      // Obtener la fecha de hoy en formato dd/MM/yyyy
-      const fechaHoy = new Date();
-      const diaHoy = String(fechaHoy.getDate()).padStart(2, "0");
-      const mesHoy = String(fechaHoy.getMonth() + 1).padStart(2, "0");
-      const añoHoy = fechaHoy.getFullYear();
-      const fechaFormatoHoy = `${diaHoy}/${mesHoy}/${añoHoy}`; // Ejemplo: "23/02/2026"
+            const fechaHoy = new Date();
+            const diaHoy = String(fechaHoy.getDate()).padStart(2, "0");
+            const mesHoy = String(fechaHoy.getMonth() + 1).padStart(2, "0");
+            const añoHoy = fechaHoy.getFullYear();
+            const fechaFormatoHoy = `${diaHoy}/${mesHoy}/${añoHoy}`;
 
-      // Filtramos los registros solo para mostrar los del día de hoy
-      data.reverse().forEach(row => {
-        const fechaRegistro = row[0]; // La fecha está en la primera columna (índice 0)
-
-        // Aseguramos que la fecha del registro esté en el formato correcto
-        if (fechaRegistro === fechaFormatoHoy) {
-          tbody.innerHTML += `
-            <tr>
-              <td>${row[0]}</td>
-              <td>${row[1]}</td>
-              <td>${row[2]}</td>
-              <td>${row[3]}</td>
-              <td>${row[4]}</td>
-              <td>${row[5]}</td>
-              <td>${row[6]}</td>
-              <td>${row[7]}</td>
-              <td>${row[8]}</td>
-              <td>${row[9]}</td>
-            </tr>
-          `;
-        }
-      });
-    })
-    .catch(err => console.error("Error cargando registros:", err));
-}
+            // Solo mostramos registros del día de hoy
+            data.reverse().forEach(row => {
+              const fechaRegistro = row[0];
+              if (fechaRegistro === fechaFormatoHoy) {
+                tbody.innerHTML += `
+                  <tr>
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+                    <td>${row[7]}</td>
+                    <td>${row[8]}</td>
+                    <td>${row[9]}</td>
+                  </tr>
+                `;
+              }
+            });
+          })
+          .catch(err => console.error("Error cargando registros:", err));
+      }
     </script>
   </body>
 </html>
