@@ -217,42 +217,46 @@
       document.getElementById("form").addEventListener("submit", function (e) {
         e.preventDefault();
 
-        const data = {
-          operador: nombreActual,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
+document.getElementById("form").addEventListener("submit", function (e) {
+    e.preventDefault();
 
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
+    const data = {
+        operador: nombreActual,
+        exportadora: document.getElementById("exportadora").value,
+        salida: document.getElementById("salida").value,
+        calibre: document.getElementById("calibre").value,
+        categoria: document.getElementById("categoria").value,
+        variedad: document.getElementById("variedad").value,
+        lote: document.getElementById("lote").value,
+        peso: document.getElementById("peso").value
+    };
+
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        body: new URLSearchParams(data)
+    })
+        .then(res => res.json())
+        .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
             document.getElementById("form").reset();
             cargarRegistros();  // Recargar los registros del día actual después de guardar
 
             // Guardar los datos del último registro en localStorage
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
+            localStorage.setItem("operador", nombreActual);  // Guardar operador
+            localStorage.setItem("exportadora", data.exportadora);  // Guardar exportadora
+            localStorage.setItem("variedad", data.variedad);  // Guardar variedad
+            localStorage.setItem("lote", data.lote);  // Guardar lote
 
-            // Actualizar los campos con los datos guardados
+            // Limpiar los campos que no se deben guardar
             document.getElementById("calibre").value = "";
             document.getElementById("peso").value = "";
             document.getElementById("categoria").value = "";
             document.getElementById("salida").value = "";
-            document.getElementById("operador").value = nombreActual;
+            document.getElementById("operador").value = nombreActual; // Usar el operador actual
             document.getElementById("salida").focus();
-          })
-          .catch(err => console.error("Error guardando:", err));
-      });
+        })
+        .catch(err => console.error("Error guardando:", err));
+});
 
       /* CARGAR REGISTROS */
       function cargarRegistros() {
