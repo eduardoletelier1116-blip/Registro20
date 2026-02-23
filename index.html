@@ -239,15 +239,17 @@
             cargarRegistros();  // Recargar los registros del día actual después de guardar
 
             // Guardar los datos del último registro en localStorage
-            localStorage.setItem("operador", nombreActual);
             localStorage.setItem("exportadora", data.exportadora);
             localStorage.setItem("variedad", data.variedad);
             localStorage.setItem("lote", data.lote);
 
             // Actualizar los campos con los datos guardados
-            document.getElementById("exportadora").value = data.exportadora;
-            document.getElementById("variedad").value = data.variedad;
-            document.getElementById("lote").value = data.lote;
+            document.getElementById("calibre").value = "";
+            document.getElementById("peso").value = "";
+            document.getElementById("categoria").value = "";
+            document.getElementById("salida").value = "";
+            document.getElementById("operador").value = nombreActual;
+            document.getElementById("salida").focus();
           })
           .catch(err => console.error("Error guardando:", err));
       });
