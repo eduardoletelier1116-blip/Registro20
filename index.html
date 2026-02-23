@@ -158,6 +158,7 @@
       <!-- Registro de Pesos Card -->
       <div class="card">
         <h3>Registros</h3>
+        <input type="date" id="filtroFecha" onchange="cargarRegistros()">
         <table>
           <thead>
             <tr>
@@ -189,7 +190,25 @@
         salidaSelect.appendChild(option);
       }
 
+      let modoActual = "visualizacion";
       let nombreActual = "";
+
+      /* RESTAURAR VALORES GUARDADOS */
+      window.addEventListener("load", function () {
+        const exportadora = localStorage.getItem("exportadora");
+        const variedad = localStorage.getItem("variedad");
+        const lote = localStorage.getItem("lote");
+
+        if (exportadora) document.getElementById("exportadora").value = exportadora;
+        if (variedad) document.getElementById("variedad").value = variedad;
+        if (lote) document.getElementById("lote").value = lote;
+
+        // Recuperar el nombre del operador
+        const operador = localStorage.getItem("nombreOperador");
+        if (operador) {
+          document.getElementById("operador").value = operador;
+        }
+      });
 
       /* LOGIN */
       function ingresarOperador() {
@@ -202,22 +221,34 @@
         }
 
         if (clave === "fresh") {
+          modoActual = "operador";
           nombreActual = nombre;
-          document.getElementById("operador").value = nombreActual;
-          cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
+          document.getElementById("app").classList.remove("hidden");
           document.getElementById("formCard").classList.remove("hidden");
-          cargarDatosPrevios(); // Cargar los datos previos del último registro
-          // Guardar nombre del operador en localStorage
-          localStorage.setItem("nombreOperador", nombre);
+          document.getElementById("operador").value = nombreActual;
+          cargarRegistros();
+          document.getElementById("salida").focus();
+
+          // Guardar el nombre del operador en localStorage
+          localStorage.setItem("nombreOperador", nombreActual);
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
       }
 
+      function modoVisualizacion() {
+        modoActual = "visualizacion";
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+        document.getElementById("formCard").classList.add("hidden");
+        cargarRegistros();
+      }
+
       /* GUARDAR REGISTRO */
       document.getElementById("form").addEventListener("submit", function (e) {
         e.preventDefault();
+        if (modoActual !== "operador") return;
 
         const data = {
           operador: nombreActual,
@@ -237,18 +268,20 @@
           .then(res => res.json())
           .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
-            document.getElementById("form").reset();
-            cargarRegistros();  // Recargar los registros del día actual después de guardar
 
-            // Guardar los datos del último registro en localStorage
+            // Guardar los datos persistentes
             localStorage.setItem("exportadora", data.exportadora);
             localStorage.setItem("variedad", data.variedad);
             localStorage.setItem("lote", data.lote);
 
-            // Actualizar los campos con los datos guardados
-            document.getElementById("exportadora").value = data.exportadora;
-            document.getElementById("variedad").value = data.variedad;
-            document.getElementById("lote").value = data.lote;
+            // Limpiar solo los campos variables
+            document.getElementById("calibre").value = "";
+            document.getElementById("peso").value = "";
+            document.getElementById("categoria").value = "";
+            document.getElementById("salida").value = "";
+            document.getElementById("operador").value = nombreActual;
+
+            setTimeout(cargarRegistros, 400);
           })
           .catch(err => console.error("Error guardando:", err));
       });
@@ -261,53 +294,29 @@
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
 
-            const fechaHoy = new Date();
-            const diaHoy = String(fechaHoy.getDate()).padStart(2, "0");
-            const mesHoy = String(fechaHoy.getMonth() + 1).padStart(2, "0");
-            const añoHoy = fechaHoy.getFullYear();
-            const fechaFormatoHoy = `${diaHoy}/${mesHoy}/${añoHoy}`;
+            const filtro = document.getElementById("filtroFecha").value;
 
-            // Solo mostramos registros del día de hoy
             data.reverse().forEach(row => {
-              const fechaRegistro = row[0];
-              if (fechaRegistro === fechaFormatoHoy) {
-                tbody.innerHTML += `
-                  <tr>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td>${row[7]}</td>
-                    <td>${row[8]}</td>
-                    <td>${row[9]}</td>
-                  </tr>
-                `;
-              }
+              if (filtro && row[0] !== filtro) return;
+
+              tbody.innerHTML += `
+                <tr>
+                  <td>${row[0]}</td>
+                  <td>${row[1]}</td>
+                  <td>${row[2]}</td>
+                  <td>${row[3]}</td>
+                  <td>${row[4]}</td>
+                  <td>${row[5]}</td>
+                  <td>${row[6]}</td>
+                  <td>${row[7]}</td>
+                  <td>${row[8]}</td>
+                  <td>${row[9]}</td>
+                </tr>
+              `;
             });
           })
           .catch(err => console.error("Error cargando registros:", err));
       }
-
-      // Cargar los datos previos del último registro
-      function cargarDatosPrevios() {
-        const operador = localStorage.getItem("nombreOperador");
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (operador) document.getElementById("operador").value = operador;
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
-      }
-
-      // Cargar registros al cargar la página
-      window.onload = function() {
-        cargarRegistros(); // Esto asegura que los registros se muestren al iniciar la página
-      };
     </script>
   </body>
 </html>
