@@ -207,6 +207,8 @@
           cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("formCard").classList.remove("hidden");
+          // Cargar los datos previos del último registro
+          cargarDatosPrevios();
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
@@ -236,6 +238,11 @@
             document.getElementById("msg").innerText = "Guardado correctamente";
             document.getElementById("form").reset();
             cargarRegistros();  // Recargar los registros del día actual después de guardar
+
+            // Guardar los datos del último registro en localStorage
+            localStorage.setItem("exportadora", data.exportadora);
+            localStorage.setItem("variedad", data.variedad);
+            localStorage.setItem("lote", data.lote);
           })
           .catch(err => console.error("Error guardando:", err));
       });
@@ -276,6 +283,17 @@
             });
           })
           .catch(err => console.error("Error cargando registros:", err));
+      }
+
+      // Cargar los datos previos del último registro
+      function cargarDatosPrevios() {
+        const exportadora = localStorage.getItem("exportadora");
+        const variedad = localStorage.getItem("variedad");
+        const lote = localStorage.getItem("lote");
+
+        if (exportadora) document.getElementById("exportadora").value = exportadora;
+        if (variedad) document.getElementById("variedad").value = variedad;
+        if (lote) document.getElementById("lote").value = lote;
       }
 
       // Cargar registros al cargar la página
