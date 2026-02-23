@@ -287,12 +287,19 @@ function cargarRegistros() {
       const tbody = document.getElementById("tabla");
       tbody.innerHTML = "";
 
-      const fechaHoy = new Date().toLocaleDateString("es-CL"); // Fecha de hoy en formato 'dd/MM/yyyy'
+      // Obtener la fecha de hoy en formato dd/MM/yyyy
+      const fechaHoy = new Date();
+      const diaHoy = String(fechaHoy.getDate()).padStart(2, "0");
+      const mesHoy = String(fechaHoy.getMonth() + 1).padStart(2, "0");
+      const añoHoy = fechaHoy.getFullYear();
+      const fechaFormatoHoy = `${diaHoy}/${mesHoy}/${añoHoy}`; // Ejemplo: "23/02/2026"
 
       // Filtramos los registros solo para mostrar los del día de hoy
       data.reverse().forEach(row => {
         const fechaRegistro = row[0]; // La fecha está en la primera columna (índice 0)
-        if (fechaRegistro === fechaHoy) {
+
+        // Aseguramos que la fecha del registro esté en el formato correcto
+        if (fechaRegistro === fechaFormatoHoy) {
           tbody.innerHTML += `
             <tr>
               <td>${row[0]}</td>
