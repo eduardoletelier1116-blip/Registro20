@@ -191,92 +191,89 @@
 
       let nombreActual = "";
 
-      /* LOGIN */
-      function ingresarOperador() {
-        const nombre = document.getElementById("nombreOperador").value.trim();
-        const clave = document.getElementById("claveOperador").value.trim();
+/* LOGIN */
+function ingresarOperador() {
+  const nombre = document.getElementById("nombreOperador").value.trim();
+  const clave = document.getElementById("claveOperador").value.trim();
 
-        if (!nombre || !clave) {
-          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
-          return;
+  if (!nombre || !clave) {
+    document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
+    return;
+  }
+
+  if (clave === "fresh") {
+    nombreActual = nombre;
+    document.getElementById("operador").value = nombreActual;
+    cargarRegistros(); // Cargar los registros del día actual
+    document.getElementById("loginCard").classList.add("hidden");
+    document.getElementById("formCard").classList.remove("hidden");
+  } else {
+    document.getElementById("msgLogin").innerText = "Clave incorrecta";
+  }
+}
+
+/* GUARDAR REGISTRO */
+document.getElementById("form").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const data = {
+    operador: nombreActual,
+    exportadora: document.getElementById("exportadora").value,
+    salida: document.getElementById("salida").value,
+    calibre: document.getElementById("calibre").value,
+    categoria: document.getElementById("categoria").value,
+    variedad: document.getElementById("variedad").value,
+    lote: document.getElementById("lote").value,
+    peso: document.getElementById("peso").value
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: new URLSearchParams(data)
+  })
+    .then(res => res.json())
+    .then(() => {
+      document.getElementById("msg").innerText = "Guardado correctamente";
+      document.getElementById("form").reset();
+      cargarRegistros();  // Recargar los registros del día actual después de guardar
+    })
+    .catch(err => console.error("Error guardando:", err));
+});
+
+/* CARGAR REGISTROS */
+function cargarRegistros() {
+  fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.getElementById("tabla");
+      tbody.innerHTML = "";
+
+      const fechaHoy = new Date();
+      const diaHoy = String(fechaHoy.getDate()).padStart(2, "0");
+      const mesHoy = String(fechaHoy.getMonth() + 1).padStart(2, "0");
+      const añoHoy = fechaHoy.getFullYear();
+      const fechaFormatoHoy = `${diaHoy}/${mesHoy}/${añoHoy}`;
+
+      // Solo mostramos registros del día de hoy
+      data.reverse().forEach(row => {
+        const fechaRegistro = row[0];
+        if (fechaRegistro === fechaFormatoHoy) {
+          tbody.innerHTML += `
+            <tr>
+              <td>${row[0]}</td>
+              <td>${row[1]}</td>
+              <td>${row[2]}</td>
+              <td>${row[3]}</td>
+              <td>${row[4]}</td>
+              <td>${row[5]}</td>
+              <td>${row[6]}</td>
+              <td>${row[7]}</td>
+              <td>${row[8]}</td>
+              <td>${row[9]}</td>
+            </tr>
+          `;
         }
-
-        if (clave === "fresh") {
-          nombreActual = nombre;
-          document.getElementById("operador").value = nombreActual;
-          cargarRegistros(); // Cargar los registros del día actual
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
-        } else {
-          document.getElementById("msgLogin").innerText = "Clave incorrecta";
-        }
-      }
-
-      /* GUARDAR REGISTRO */
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const data = {
-          operador: nombreActual,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
-
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
-            document.getElementById("msg").innerText = "Guardado correctamente";
-            document.getElementById("form").reset();
-            cargarRegistros();  // Recargar los registros del día actual después de guardar
-          })
-          .catch(err => console.error("Error guardando:", err));
       });
-
-      /* CARGAR REGISTROS */
-      function cargarRegistros() {
-        fetch(SCRIPT_URL)
-          .then(res => res.json())
-          .then(data => {
-            const tbody = document.getElementById("tabla");
-            tbody.innerHTML = "";
-
-            const fechaHoy = new Date();
-            const diaHoy = String(fechaHoy.getDate()).padStart(2, "0");
-            const mesHoy = String(fechaHoy.getMonth() + 1).padStart(2, "0");
-            const añoHoy = fechaHoy.getFullYear();
-            const fechaFormatoHoy = `${diaHoy}/${mesHoy}/${añoHoy}`;
-
-            // Solo mostramos registros del día de hoy
-            data.reverse().forEach(row => {
-              const fechaRegistro = row[0];
-              if (fechaRegistro === fechaFormatoHoy) {
-                tbody.innerHTML += `
-                  <tr>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td>${row[7]}</td>
-                    <td>${row[8]}</td>
-                    <td>${row[9]}</td>
-                  </tr>
-                `;
-              }
-            });
-          })
-          .catch(err => console.error("Error cargando registros:", err));
-      }
-    </script>
-  </body>
-</html>
+    })
+    .catch(err => console.error("Error cargando registros:", err));
+}
