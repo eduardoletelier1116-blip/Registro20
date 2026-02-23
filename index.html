@@ -277,6 +277,11 @@
           })
           .catch(err => console.error("Error cargando registros:", err));
       }
+
+      // Cargar registros al cargar la página
+      window.onload = function() {
+        cargarRegistros(); // Esto asegura que los registros se muestren al iniciar la página
+      };
     </script>
   </body>
 </html>
