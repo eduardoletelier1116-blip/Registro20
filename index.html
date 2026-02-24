@@ -97,6 +97,10 @@
       .hidden {
         display: none;
       }
+
+      .registers-card {
+        margin-top: 30px;
+      }
     </style>
   </head>
 
@@ -108,6 +112,7 @@
     </header>
 
     <div class="container">
+      <!-- Login Card -->
       <div class="card" id="loginCard">
         <h3>Ingreso</h3>
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
@@ -116,6 +121,7 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
+      <!-- Main App Section -->
       <div id="app" class="hidden">
         <div class="card" id="formCard">
           <h3>Nuevo Registro</h3>
@@ -154,7 +160,8 @@
           </form>
         </div>
 
-        <div class="card">
+        <!-- Card to Display Registers -->
+        <div class="card registers-card">
           <h3>Registros</h3>
           <input type="date" id="filtroFecha" onchange="cargarRegistros()">
           <table>
