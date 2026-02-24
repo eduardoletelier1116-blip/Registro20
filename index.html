@@ -307,7 +307,8 @@
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
 
-            const registrosFiltrados = filtrarRegistrosPorDia(data); // Filtrar registros solo de hoy
+            // Filtrar registros solo de hoy
+            const registrosFiltrados = filtrarRegistrosPorDia(data); 
 
             registrosFiltrados.reverse().forEach(row => {
               tbody.innerHTML += `
