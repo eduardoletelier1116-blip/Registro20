@@ -189,7 +189,6 @@
         salidaSelect.appendChild(option);
       }
 
-      let nombreActual = "";
       let operadorData = {
         operador: "",
         exportadora: "",
@@ -208,8 +207,7 @@
         }
 
         if (clave === "fresh") {
-          nombreActual = nombre;
-          operadorData.operador = nombreActual; // Guardamos el operador en operadorData
+          operadorData.operador = nombre;  // Guardamos el operador
           document.getElementById("operador").value = operadorData.operador;
 
           cargarRegistros(); // Cargar los registros del día actual
@@ -246,7 +244,7 @@
             document.getElementById("form").reset();
             cargarRegistros();  // Recargar los registros del día actual después de guardar
 
-            // Mantener solo los datos del operador, exportadora, variedad, lote
+            // Mantener los datos del operador, exportadora, variedad, lote
             operadorData.exportadora = data.exportadora;
             operadorData.variedad = data.variedad;
             operadorData.lote = data.lote;
@@ -304,6 +302,7 @@
 
       // Cargar los datos previos del último registro
       function cargarDatosPrevios() {
+        // Cargar los datos previos de operador, exportadora, variedad y lote
         document.getElementById("operador").value = operadorData.operador;
         document.getElementById("exportadora").value = operadorData.exportadora || "";
         document.getElementById("variedad").value = operadorData.variedad || "";
