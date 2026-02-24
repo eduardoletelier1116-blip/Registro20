@@ -108,8 +108,17 @@
     </header>
 
     <div class="container">
-      <!-- 1. Nuevo Registro Card (arriba) -->
-      <div class="card" id="formCard">
+      <!-- 1. Login Card (inicio de sesión, solo visible al principio) -->
+      <div class="card" id="loginCard">
+        <h3>Ingreso</h3>
+        <input type="text" id="nombreOperador" placeholder="Nombre operador">
+        <input type="password" id="claveOperador" placeholder="Clave operador">
+        <button onclick="ingresarOperador()">Operador</button>
+        <p id="msgLogin" style="color:red;"></p>
+      </div>
+
+      <!-- 2. Nuevo Registro Card (mostrado después de login) -->
+      <div class="card hidden" id="formCard">
         <h3>Nuevo Registro</h3>
         <form id="form">
           <input type="text" id="operador" readonly>
@@ -146,8 +155,8 @@
         </form>
       </div>
 
-      <!-- 2. Registros Card (debajo del formulario de login y nuevo registro) -->
-      <div class="card" id="registrosCard">
+      <!-- 3. Registros Card (mostrado después de login) -->
+      <div class="card hidden" id="registrosCard">
         <h3>Registros</h3>
         <input type="date" id="filtroFecha" onchange="cargarRegistros()">
         <table>
@@ -167,19 +176,6 @@
           </thead>
           <tbody id="tabla"></tbody>
         </table>
-      </div>
-
-      <!-- 3. Login Card (escondido hasta el inicio de sesión) -->
-      <div class="card" id="loginCard">
-        <h3>Ingreso</h3>
-        <input type="text" id="nombreOperador" placeholder="Nombre operador">
-        <input type="password" id="claveOperador" placeholder="Clave operador">
-        <button onclick="ingresarOperador()">Operador</button>
-        <p id="msgLogin" style="color:red;"></p>
-      </div>
-
-      <!-- App (formulario, oculto hasta login) -->
-      <div id="app" class="hidden">
       </div>
     </div>
 
