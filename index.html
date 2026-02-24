@@ -205,6 +205,17 @@
         return `${d}/${m}/${y}`;
       }
 
+      // Filtra los registros para mostrar solo los del día actual
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const diaHoy = String(hoy.getDate()).padStart(2, "0");
+        const mesHoy = String(hoy.getMonth() + 1).padStart(2, "0");
+        const añoHoy = hoy.getFullYear();
+        const fechaHoy = `${añoHoy}-${mesHoy}-${diaHoy}`;
+
+        return registros.filter(row => row[0] === fechaHoy); // Compara con fecha actual (YYYY-MM-DD)
+      }
+
       /* RESTAURAR VALORES GUARDADOS */
       window.addEventListener("load", function () {
         const exportadora = localStorage.getItem("exportadora");
@@ -297,17 +308,9 @@
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
 
-            const filtroISO = document.getElementById("filtroFecha").value; // yyyy-mm-dd
-            const filtroLatam = isoToLatam(filtroISO); // dd/MM/yyyy
+            const registrosFiltrados = filtrarRegistrosPorDia(data); // Filtrar registros solo de hoy
 
-            data.reverse().forEach(row => {
-              const fechaRegistro = row[0];
-
-              // Si hay filtro, aceptamos match en cualquiera de los dos formatos
-              if (filtroISO) {
-                if (fechaRegistro !== filtroISO && fechaRegistro !== filtroLatam) return;
-              }
-
+            registrosFiltrados.reverse().forEach(row => {
               tbody.innerHTML += `
                 <tr>
                   <td>${row[0]}</td>
