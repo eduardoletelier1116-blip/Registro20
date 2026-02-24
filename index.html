@@ -108,16 +108,45 @@
     </header>
 
     <div class="container">
-      <!-- 1. Login Card (arriba) -->
-      <div class="card" id="loginCard">
-        <h3>Ingreso</h3>
-        <input type="text" id="nombreOperador" placeholder="Nombre operador">
-        <input type="password" id="claveOperador" placeholder="Clave operador">
-        <button onclick="ingresarOperador()">Operador</button>
-        <p id="msgLogin" style="color:red;"></p>
+      <!-- 1. Nuevo Registro Card (arriba) -->
+      <div class="card" id="formCard">
+        <h3>Nuevo Registro</h3>
+        <form id="form">
+          <input type="text" id="operador" readonly>
+          <select id="exportadora" required>
+            <option value="">Exportadora</option>
+            <option>Fruclem</option>
+            <option>JHB</option>
+            <option>Talamaya</option>
+          </select>
+          <select id="categoria" required>
+            <option value="">Categoría</option>
+            <option>Premium</option>
+            <option>Extra</option>
+            <option>Fancy</option>
+            <option>Choice</option>
+            <option>Granel</option>
+          </select>
+          <select id="variedad" required>
+            <option value="">Variedad</option>
+            <option>Royal Gala</option>
+            <option>Red Delicious</option>
+            <option>Granny</option>
+            <option>Fuji</option>
+            <option>Pink Lady</option>
+          </select>
+          <select id="salida" required>
+            <option value="">Salida</option>
+          </select>
+          <input type="text" id="calibre" placeholder="Calibre" required>
+          <input type="text" id="lote" placeholder="Lote">
+          <input type="number" step="0.01" id="peso" placeholder="Peso (kg)" required>
+          <button type="submit">Guardar</button>
+          <p id="msg" class="success"></p>
+        </form>
       </div>
 
-      <!-- 2. Registros Card (debajo, siempre visible) -->
+      <!-- 2. Registros Card (debajo del formulario de login y nuevo registro) -->
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <input type="date" id="filtroFecha" onchange="cargarRegistros()">
@@ -140,44 +169,17 @@
         </table>
       </div>
 
-      <!-- 3. App Card (Formulario, oculto hasta login) -->
+      <!-- 3. Login Card (escondido hasta el inicio de sesión) -->
+      <div class="card" id="loginCard">
+        <h3>Ingreso</h3>
+        <input type="text" id="nombreOperador" placeholder="Nombre operador">
+        <input type="password" id="claveOperador" placeholder="Clave operador">
+        <button onclick="ingresarOperador()">Operador</button>
+        <p id="msgLogin" style="color:red;"></p>
+      </div>
+
+      <!-- App (formulario, oculto hasta login) -->
       <div id="app" class="hidden">
-        <div class="card" id="formCard">
-          <h3>Nuevo Registro</h3>
-          <form id="form">
-            <input type="text" id="operador" readonly>
-            <select id="exportadora" required>
-              <option value="">Exportadora</option>
-              <option>Fruclem</option>
-              <option>JHB</option>
-              <option>Talamaya</option>
-            </select>
-            <select id="categoria" required>
-              <option value="">Categoría</option>
-              <option>Premium</option>
-              <option>Extra</option>
-              <option>Fancy</option>
-              <option>Choice</option>
-              <option>Granel</option>
-            </select>
-            <select id="variedad" required>
-              <option value="">Variedad</option>
-              <option>Royal Gala</option>
-              <option>Red Delicious</option>
-              <option>Granny</option>
-              <option>Fuji</option>
-              <option>Pink Lady</option>
-            </select>
-            <select id="salida" required>
-              <option value="">Salida</option>
-            </select>
-            <input type="text" id="calibre" placeholder="Calibre" required>
-            <input type="text" id="lote" placeholder="Lote">
-            <input type="number" step="0.01" id="peso" placeholder="Peso (kg)" required>
-            <button type="submit">Guardar</button>
-            <p id="msg" class="success"></p>
-          </form>
-        </div>
       </div>
     </div>
 
@@ -217,7 +219,7 @@
         if (variedad) document.getElementById("variedad").value = variedad;
         if (lote) document.getElementById("lote").value = lote;
 
-        // ✅ Cargar registros al abrir (sin login)
+        // Cargar registros al abrir (sin login)
         cargarRegistros();
       });
 
@@ -235,11 +237,14 @@
           operadorData.operador = nombre;
           document.getElementById("operador").value = operadorData.operador;
 
+          // Ocultar el login y mostrar el formulario y registros
           document.getElementById("loginCard").classList.add("hidden");
+          document.getElementById("registrosCard").classList.remove("hidden");
+          document.getElementById("formCard").classList.remove("hidden");
           document.getElementById("app").classList.remove("hidden");
           document.getElementById("salida").focus();
 
-          // refresca registros también
+          // refrescar registros también
           cargarRegistros();
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
