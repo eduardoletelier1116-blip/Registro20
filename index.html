@@ -190,7 +190,12 @@
       }
 
       let nombreActual = "";
-      let operadorData = {}; // Almacenará datos del operador
+      let operadorData = {
+        operador: "",
+        exportadora: "",
+        variedad: "",
+        lote: ""
+      };
 
       /* LOGIN */
       function ingresarOperador() {
@@ -204,14 +209,8 @@
 
         if (clave === "fresh") {
           nombreActual = nombre;
-          // Guardar datos del operador en la variable operadorData
-          operadorData.operador = nombreActual;
-          operadorData.exportadora = document.getElementById("exportadora").value;
-          operadorData.variedad = document.getElementById("variedad").value;
-          operadorData.lote = document.getElementById("lote").value;
-
-          // Asignar valor al campo "operador"
-          document.getElementById("operador").value = nombreActual;
+          operadorData.operador = nombreActual; // Guardamos el operador en operadorData
+          document.getElementById("operador").value = operadorData.operador;
 
           cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
@@ -227,7 +226,7 @@
         e.preventDefault();
 
         const data = {
-          operador: operadorData.operador, // Usar los valores guardados
+          operador: operadorData.operador,
           exportadora: document.getElementById("exportadora").value,
           salida: document.getElementById("salida").value,
           calibre: document.getElementById("calibre").value,
@@ -247,7 +246,7 @@
             document.getElementById("form").reset();
             cargarRegistros();  // Recargar los registros del día actual después de guardar
 
-            // Guardar los datos en la variable operadorData
+            // Mantener solo los datos del operador, exportadora, variedad, lote
             operadorData.exportadora = data.exportadora;
             operadorData.variedad = data.variedad;
             operadorData.lote = data.lote;
@@ -305,10 +304,10 @@
 
       // Cargar los datos previos del último registro
       function cargarDatosPrevios() {
-        if (operadorData.operador) document.getElementById("operador").value = operadorData.operador;
-        if (operadorData.exportadora) document.getElementById("exportadora").value = operadorData.exportadora;
-        if (operadorData.variedad) document.getElementById("variedad").value = operadorData.variedad;
-        if (operadorData.lote) document.getElementById("lote").value = operadorData.lote;
+        document.getElementById("operador").value = operadorData.operador;
+        document.getElementById("exportadora").value = operadorData.exportadora || "";
+        document.getElementById("variedad").value = operadorData.variedad || "";
+        document.getElementById("lote").value = operadorData.lote || "";
       }
 
       // Cargar registros al cargar la página
