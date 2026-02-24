@@ -108,7 +108,7 @@
     </header>
 
     <div class="container">
-      <!-- ✅ Invertir: La tarjeta de login va arriba -->
+      <!-- 1. Login Card (debajo de header) -->
       <div class="card" id="loginCard">
         <h3>Ingreso</h3>
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
@@ -117,7 +117,7 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
-      <!-- ✅ Ahora los registros están debajo -->
+      <!-- 2. Registros Card (debajo del login, visible siempre) -->
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <input type="date" id="filtroFecha" onchange="cargarRegistros()">
@@ -140,7 +140,7 @@
         </table>
       </div>
 
-      <!-- App (formulario) oculto hasta login -->
+      <!-- 3. App Card (Formulario, oculto hasta login) -->
       <div id="app" class="hidden">
         <div class="card" id="formCard">
           <h3>Nuevo Registro</h3>
@@ -182,7 +182,7 @@
     </div>
 
     <script>
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpq6k7t7izq1zHok-67xHJHPw371CdcrbdLS0AM2IDXqG1d13UySpLHO4E2GS0c001/exec";
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
 
       for (let i = 1; i <= 41; i++) {
