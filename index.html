@@ -211,6 +211,9 @@
         const hoy = new Date();
         const fechaHoy = formatDate(hoy);
 
+        console.log("Fecha de hoy:", fechaHoy); // Para depuración
+        console.log("Registros recibidos:", registros); // Para depuración
+
         return registros.filter(row => formatDate(row[0]) === fechaHoy); // Compara con la fecha de hoy
       }
 
