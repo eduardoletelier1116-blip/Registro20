@@ -204,7 +204,8 @@
         if (clave === "fresh") {
           nombreActual = nombre;
           document.getElementById("operador").value = nombreActual;
-          localStorage.setItem("operador", nombreActual);  // Guardar nombre en localStorage
+          // Guardar nombre, exportadora, variedad y lote en localStorage
+          localStorage.setItem("operador", nombreActual);
           cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("formCard").classList.remove("hidden");
