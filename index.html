@@ -97,10 +97,6 @@
       .hidden {
         display: none;
       }
-
-      .registers-card {
-        margin-top: 30px;
-      }
     </style>
   </head>
 
@@ -121,7 +117,30 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
-      <!-- Main App Section -->
+      <!-- ✅ Registros SIEMPRE visibles (pantalla principal bajo login) -->
+      <div class="card" id="registrosCard">
+        <h3>Registros</h3>
+        <input type="date" id="filtroFecha" onchange="cargarRegistros()">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Usuario</th>
+              <th>Exportadora</th>
+              <th>Salida</th>
+              <th>Calibre</th>
+              <th>Categoria</th>
+              <th>Variedad</th>
+              <th>Lote</th>
+              <th>Peso</th>
+            </tr>
+          </thead>
+          <tbody id="tabla"></tbody>
+        </table>
+      </div>
+
+      <!-- App (formulario) oculto hasta login -->
       <div id="app" class="hidden">
         <div class="card" id="formCard">
           <h3>Nuevo Registro</h3>
@@ -159,34 +178,11 @@
             <p id="msg" class="success"></p>
           </form>
         </div>
-
-        <!-- Card to Display Registers -->
-        <div class="card registers-card">
-          <h3>Registros</h3>
-          <input type="date" id="filtroFecha" onchange="cargarRegistros()">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Usuario</th>
-                <th>Exportadora</th>
-                <th>Salida</th>
-                <th>Calibre</th>
-                <th>Categoria</th>
-                <th>Variedad</th>
-                <th>Lote</th>
-                <th>Peso</th>
-              </tr>
-            </thead>
-            <tbody id="tabla"></tbody>
-          </table>
-        </div>
       </div>
     </div>
 
     <script>
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpq6k7t7izq1zHok-67xHJHPw371CdcrbdLS0AM2IDXqG1d13UySpLHO4E2GS0c001/exec";
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
 
       for (let i = 1; i <= 41; i++) {
@@ -197,12 +193,13 @@
       }
 
       let nombreActual = "";
-      let operadorData = {
-        operador: "",
-        exportadora: "",
-        variedad: "",
-        lote: ""
-      };
+
+      // Convierte yyyy-mm-dd -> dd/MM/yyyy (por si tu hoja guarda así)
+      function isoToLatam(iso) {
+        if (!iso || !iso.includes("-")) return "";
+        const [y, m, d] = iso.split("-");
+        return `${d}/${m}/${y}`;
+      }
 
       /* RESTAURAR VALORES GUARDADOS */
       window.addEventListener("load", function () {
@@ -213,6 +210,9 @@
         if (exportadora) document.getElementById("exportadora").value = exportadora;
         if (variedad) document.getElementById("variedad").value = variedad;
         if (lote) document.getElementById("lote").value = lote;
+
+        // ✅ Cargar registros al abrir (sin login)
+        cargarRegistros();
       });
 
       /* LOGIN */
@@ -226,14 +226,15 @@
         }
 
         if (clave === "fresh") {
-          operadorData.operador = nombre;
-          document.getElementById("operador").value = operadorData.operador;
+          nombreActual = nombre;
+          document.getElementById("operador").value = nombreActual;
 
-          cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("app").classList.remove("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
           document.getElementById("salida").focus();
+
+          // refresca registros también
+          cargarRegistros();
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
@@ -244,7 +245,7 @@
         e.preventDefault();
 
         const data = {
-          operador: operadorData.operador,
+          operador: nombreActual,
           exportadora: document.getElementById("exportadora").value,
           salida: document.getElementById("salida").value,
           calibre: document.getElementById("calibre").value,
@@ -262,17 +263,18 @@
           .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
 
-            /* GUARDAR CAMPOS PERSISTENTES */
+            // Persistentes
             localStorage.setItem("exportadora", data.exportadora);
             localStorage.setItem("variedad", data.variedad);
             localStorage.setItem("lote", data.lote);
 
-            /* LIMPIAR SOLO CAMPOS VARIABLES */
+            // Limpiar SOLO variables
             document.getElementById("calibre").value = "";
             document.getElementById("peso").value = "";
             document.getElementById("categoria").value = "";
             document.getElementById("salida").value = "";
-            document.getElementById("operador").value = operadorData.operador;
+            document.getElementById("operador").value = nombreActual;
+
             document.getElementById("salida").focus();
 
             setTimeout(cargarRegistros, 400);
@@ -288,10 +290,16 @@
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
 
-            const filtro = document.getElementById("filtroFecha").value;
+            const filtroISO = document.getElementById("filtroFecha").value; // yyyy-mm-dd
+            const filtroLatam = isoToLatam(filtroISO); // dd/MM/yyyy
 
             data.reverse().forEach(row => {
-              if (filtro && row[0] !== filtro) return;
+              const fechaRegistro = row[0];
+
+              // Si hay filtro, aceptamos match en cualquiera de los dos formatos
+              if (filtroISO) {
+                if (fechaRegistro !== filtroISO && fechaRegistro !== filtroLatam) return;
+              }
 
               tbody.innerHTML += `
                 <tr>
