@@ -113,7 +113,6 @@
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
         <input type="password" id="claveOperador" placeholder="Clave operador">
         <button onclick="ingresarOperador()">Operador</button>
-        <button onclick="modoVisualizacion()">Visualización</button>
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
@@ -190,8 +189,13 @@
         salidaSelect.appendChild(option);
       }
 
-      let modoActual = "visualizacion";
       let nombreActual = "";
+      let operadorData = {
+        operador: "",
+        exportadora: "",
+        variedad: "",
+        lote: ""
+      };
 
       /* RESTAURAR VALORES GUARDADOS */
       window.addEventListener("load", function () {
@@ -215,35 +219,25 @@
         }
 
         if (clave === "fresh") {
-          modoActual = "operador";
-          nombreActual = nombre;
+          operadorData.operador = nombre;
+          document.getElementById("operador").value = operadorData.operador;
+
+          cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("app").classList.remove("hidden");
           document.getElementById("formCard").classList.remove("hidden");
-          document.getElementById("operador").value = nombreActual;
-          cargarRegistros();
           document.getElementById("salida").focus();
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
       }
 
-      function modoVisualizacion() {
-        modoActual = "visualizacion";
-        document.getElementById("loginCard").classList.add("hidden");
-        document.getElementById("app").classList.remove("hidden");
-        document.getElementById("formCard").classList.add("hidden");
-        cargarRegistros();
-      }
-
       /* GUARDAR REGISTRO */
       document.getElementById("form").addEventListener("submit", function (e) {
         e.preventDefault();
 
-        if (modoActual !== "operador") return;
-
         const data = {
-          operador: nombreActual,
+          operador: operadorData.operador,
           exportadora: document.getElementById("exportadora").value,
           salida: document.getElementById("salida").value,
           calibre: document.getElementById("calibre").value,
@@ -271,7 +265,7 @@
             document.getElementById("peso").value = "";
             document.getElementById("categoria").value = "";
             document.getElementById("salida").value = "";
-            document.getElementById("operador").value = nombreActual;
+            document.getElementById("operador").value = operadorData.operador;
             document.getElementById("salida").focus();
 
             setTimeout(cargarRegistros, 400);
@@ -292,7 +286,7 @@
             data.reverse().forEach(row => {
               if (filtro && row[0] !== filtro) return;
 
-              tbody.innerHTML += ` 
+              tbody.innerHTML += `
                 <tr>
                   <td>${row[0]}</td>
                   <td>${row[1]}</td>
