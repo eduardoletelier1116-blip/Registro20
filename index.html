@@ -108,7 +108,7 @@
     </header>
 
     <div class="container">
-      <!-- Login Card -->
+      <!-- ✅ Invertir: El formulario de login va arriba -->
       <div class="card" id="loginCard">
         <h3>Ingreso</h3>
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
@@ -117,7 +117,7 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
-      <!-- ✅ Registros SIEMPRE visibles (pantalla principal bajo login) -->
+      <!-- ✅ Ahora los registros están debajo -->
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <input type="date" id="filtroFecha" onchange="cargarRegistros()">
@@ -182,7 +182,7 @@
     </div>
 
     <script>
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpq6k7t7izq1zHok-67xHJHPw371CdcrbdLS0AM2IDXqG1d13UySpLHO4E2GS0c001/exec";
       const salidaSelect = document.getElementById("salida");
 
       for (let i = 1; i <= 41; i++) {
@@ -193,6 +193,12 @@
       }
 
       let nombreActual = "";
+      let operadorData = {
+        operador: "",
+        exportadora: "",
+        variedad: "",
+        lote: ""
+      };
 
       // Convierte yyyy-mm-dd -> dd/MM/yyyy (por si tu hoja guarda así)
       function isoToLatam(iso) {
@@ -226,8 +232,8 @@
         }
 
         if (clave === "fresh") {
-          nombreActual = nombre;
-          document.getElementById("operador").value = nombreActual;
+          operadorData.operador = nombre;
+          document.getElementById("operador").value = operadorData.operador;
 
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("app").classList.remove("hidden");
@@ -245,7 +251,7 @@
         e.preventDefault();
 
         const data = {
-          operador: nombreActual,
+          operador: operadorData.operador,
           exportadora: document.getElementById("exportadora").value,
           salida: document.getElementById("salida").value,
           calibre: document.getElementById("calibre").value,
@@ -273,7 +279,7 @@
             document.getElementById("peso").value = "";
             document.getElementById("categoria").value = "";
             document.getElementById("salida").value = "";
-            document.getElementById("operador").value = nombreActual;
+            document.getElementById("operador").value = operadorData.operador;
 
             document.getElementById("salida").focus();
 
