@@ -190,6 +190,7 @@
       }
 
       let nombreActual = "";
+      let operadorData = {}; // Almacenará datos del operador
 
       /* LOGIN */
       function ingresarOperador() {
@@ -203,9 +204,15 @@
 
         if (clave === "fresh") {
           nombreActual = nombre;
+          // Guardar datos del operador en la variable operadorData
+          operadorData.operador = nombreActual;
+          operadorData.exportadora = document.getElementById("exportadora").value;
+          operadorData.variedad = document.getElementById("variedad").value;
+          operadorData.lote = document.getElementById("lote").value;
+
+          // Asignar valor al campo "operador"
           document.getElementById("operador").value = nombreActual;
-          // Guardar nombre, exportadora, variedad y lote en localStorage
-          localStorage.setItem("operador", nombreActual);
+
           cargarRegistros(); // Cargar los registros del día actual
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("formCard").classList.remove("hidden");
@@ -220,7 +227,7 @@
         e.preventDefault();
 
         const data = {
-          operador: nombreActual,
+          operador: operadorData.operador, // Usar los valores guardados
           exportadora: document.getElementById("exportadora").value,
           salida: document.getElementById("salida").value,
           calibre: document.getElementById("calibre").value,
@@ -240,10 +247,10 @@
             document.getElementById("form").reset();
             cargarRegistros();  // Recargar los registros del día actual después de guardar
 
-            // Guardar los datos del último registro en localStorage
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
+            // Guardar los datos en la variable operadorData
+            operadorData.exportadora = data.exportadora;
+            operadorData.variedad = data.variedad;
+            operadorData.lote = data.lote;
 
             // Resetear solo los campos de calibre, categoria, peso y salida
             document.getElementById("calibre").value = "";
@@ -252,7 +259,7 @@
             document.getElementById("salida").value = "";
 
             // Mantener los datos del operador, exportadora, variedad, lote
-            document.getElementById("operador").value = nombreActual;
+            document.getElementById("operador").value = operadorData.operador;
             document.getElementById("salida").focus();
           })
           .catch(err => console.error("Error guardando:", err));
@@ -298,15 +305,10 @@
 
       // Cargar los datos previos del último registro
       function cargarDatosPrevios() {
-        const operador = localStorage.getItem("operador");
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (operador) document.getElementById("operador").value = operador;
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
+        if (operadorData.operador) document.getElementById("operador").value = operadorData.operador;
+        if (operadorData.exportadora) document.getElementById("exportadora").value = operadorData.exportadora;
+        if (operadorData.variedad) document.getElementById("variedad").value = operadorData.variedad;
+        if (operadorData.lote) document.getElementById("lote").value = operadorData.lote;
       }
 
       // Cargar registros al cargar la página
