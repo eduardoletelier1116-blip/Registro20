@@ -197,22 +197,21 @@
         lote: ""
       };
 
-      // Convierte yyyy-mm-dd -> dd/MM/yyyy (por si tu hoja guarda así)
-      function isoToLatam(iso) {
-        if (!iso || !iso.includes("-")) return "";
-        const [y, m, d] = iso.split("-");
-        return `${d}/${m}/${y}`;
+      // Función para comparar fechas (Formato YYYY-MM-DD)
+      function formatDate(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`; // Retorna en formato YYYY-MM-DD
       }
 
-      // Filtra los registros para mostrar solo los del día actual
+      // Filtra solo los registros del día actual
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
-        const diaHoy = String(hoy.getDate()).padStart(2, "0");
-        const mesHoy = String(hoy.getMonth() + 1).padStart(2, "0");
-        const añoHoy = hoy.getFullYear();
-        const fechaHoy = `${añoHoy}-${mesHoy}-${diaHoy}`;
+        const fechaHoy = formatDate(hoy);
 
-        return registros.filter(row => row[0] === fechaHoy); // Compara con fecha actual (YYYY-MM-DD)
+        return registros.filter(row => formatDate(row[0]) === fechaHoy); // Compara con la fecha de hoy
       }
 
       /* RESTAURAR VALORES GUARDADOS */
