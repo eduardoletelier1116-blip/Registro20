@@ -317,8 +317,8 @@
             // Filtrar registros solo de hoy
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            // Verificar si los registros filtrados están vacíos
-            console.log("Registros filtrados:", registrosFiltrados);
+            // Depuración: Verificar los registros filtrados
+            console.log("Registros filtrados para hoy:", registrosFiltrados);
 
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
