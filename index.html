@@ -216,7 +216,7 @@
 
         // Revisamos si la fecha en el registro es válida
         registros.forEach((row, index) => {
-          console.log(`Registro ${index}: ${row[0]}`); // Mostrar fecha en cada registro
+          console.log(`Fecha en registro ${index}: ${row[0]}`); // Mostrar fecha en cada registro
         });
 
         return registros.filter(row => formatDate(row[0]) === fechaHoy); // Compara la fecha del registro con la fecha de hoy
@@ -317,26 +317,29 @@
             // Filtrar registros solo de hoy
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
+            // Verificar si los registros filtrados están vacíos
+            console.log("Registros filtrados:", registrosFiltrados);
+
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
+            } else {
+              registrosFiltrados.reverse().forEach(row => {
+                tbody.innerHTML += `
+                  <tr>
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+                    <td>${row[7]}</td>
+                    <td>${row[8]}</td>
+                    <td>${row[9]}</td>
+                  </tr>
+                `;
+              });
             }
-
-            registrosFiltrados.reverse().forEach(row => {
-              tbody.innerHTML += `
-                <tr>
-                  <td>${row[0]}</td>
-                  <td>${row[1]}</td>
-                  <td>${row[2]}</td>
-                  <td>${row[3]}</td>
-                  <td>${row[4]}</td>
-                  <td>${row[5]}</td>
-                  <td>${row[6]}</td>
-                  <td>${row[7]}</td>
-                  <td>${row[8]}</td>
-                  <td>${row[9]}</td>
-                </tr>
-              `;
-            });
           })
           .catch(err => console.error("Error cargando registros:", err));
       }
