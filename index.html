@@ -214,8 +214,9 @@
         console.log("Fecha de hoy:", fechaHoy); // Para depuración
         console.log("Registros recibidos:", registros); // Para depuración
 
+        // Verificamos la fecha de cada registro antes de compararlos
         registros.forEach((row, index) => {
-          console.log(`Fecha en registro ${index}: ${row[0]}`); // Mostrar fecha en cada registro
+          console.log(`Registro ${index} - Fecha: ${row[0]}`); // Para depuración
         });
 
         return registros.filter(row => formatDate(row[0]) === fechaHoy); // Compara la fecha del registro con la fecha de hoy
