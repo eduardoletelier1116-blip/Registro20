@@ -211,9 +211,8 @@
         const hoy = new Date();
         const fechaHoy = formatDate(hoy);  // Fecha de hoy en formato YYYY-MM-DD
 
-        // Depuración: ver qué fecha estamos usando y qué registros estamos obteniendo
-        console.log("Fecha de hoy:", fechaHoy);
-        console.log("Registros recibidos:", registros);
+        console.log("Fecha de hoy:", fechaHoy); // Para depuración
+        console.log("Registros recibidos:", registros); // Para depuración
 
         return registros.filter(row => formatDate(row[0]) === fechaHoy); // Compara la fecha del registro con la fecha de hoy
       }
@@ -313,10 +312,8 @@
             // Filtrar registros solo de hoy
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            // Si no hay registros del día, mostramos un mensaje
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
-              return;
             }
 
             registrosFiltrados.reverse().forEach(row => {
