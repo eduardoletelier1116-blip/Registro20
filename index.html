@@ -313,6 +313,12 @@
             // Filtrar registros solo de hoy
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
+            // Si no hay registros del día, mostramos un mensaje
+            if (registrosFiltrados.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
+              return;
+            }
+
             registrosFiltrados.reverse().forEach(row => {
               tbody.innerHTML += `
                 <tr>
