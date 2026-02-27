@@ -102,7 +102,8 @@
 
   <body>
     <header>
-      <img src="Fondo Blanco.jpg" class="logo" alt="Fresh-Pak">
+      <!-- Asegúrate de que la ruta de la imagen sea correcta -->
+      <img src="ruta-correcta/Fondo Blanco.jpg" class="logo" alt="Fresh-Pak">
       Registro de Pesos
       <div class="codigo-empresa">R02 POE 29</div>
     </header>
@@ -196,13 +197,25 @@
 
       // Función de formateo de fecha
       function formatDate(date) {
-        // Verificar si la fecha está en el formato DD/MM/YYYY
-        const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
-        const day = String(parts[0]).padStart(2, '0');
-        const month = String(parts[1]).padStart(2, '0');
-        const year = parts[2];
+        // Verificamos si 'date' es un objeto Date
+        if (date instanceof Date) {
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${year}-${month}-${day}`;
+        }
 
-        return `${year}-${month}-${day}`;  // Devuelve en formato YYYY-MM-DD
+        // Si la fecha es un string en formato 'DD/MM/YYYY'
+        if (typeof date === 'string' && date.includes('/')) {
+          const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
+          const day = String(parts[0]).padStart(2, '0');
+          const month = String(parts[1]).padStart(2, '0');
+          const year = parts[2];
+          return `${year}-${month}-${day}`;
+        }
+
+        // Si no es un formato esperado, retornamos la fecha original
+        return date;
       }
 
       // Filtra registros solo para el día actual
