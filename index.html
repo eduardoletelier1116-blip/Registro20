@@ -194,14 +194,18 @@
         lote: ""
       };
 
+      // Función de formateo de fecha
       function formatDate(date) {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        // Verificar si la fecha está en el formato DD/MM/YYYY
+        const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
+        const day = String(parts[0]).padStart(2, '0');
+        const month = String(parts[1]).padStart(2, '0');
+        const year = parts[2];
+
+        return `${year}-${month}-${day}`;  // Devuelve en formato YYYY-MM-DD
       }
 
+      // Filtra registros solo para el día actual
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
         const fechaHoy = formatDate(hoy); 
