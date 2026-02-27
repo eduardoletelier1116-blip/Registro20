@@ -108,7 +108,6 @@
     </header>
 
     <div class="container">
-      <!-- 1. Login Card (inicio de sesión, solo visible al principio) -->
       <div class="card" id="loginCard">
         <h3>Ingreso</h3>
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
@@ -117,7 +116,6 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
-      <!-- 2. Nuevo Registro Card (mostrado después de login) -->
       <div class="card hidden" id="formCard">
         <h3>Nuevo Registro</h3>
         <form id="form">
@@ -155,7 +153,6 @@
         </form>
       </div>
 
-      <!-- 3. Registros Card (mostrado en la pantalla principal, siempre visible) -->
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <table>
@@ -197,7 +194,6 @@
         lote: ""
       };
 
-      // Formato de fecha: Convertir a "YYYY-MM-DD"
       function formatDate(date) {
         const d = new Date(date);
         const year = d.getFullYear();
@@ -206,23 +202,24 @@
         return `${year}-${month}-${day}`;
       }
 
-      // Filtra los registros para mostrar solo los del día actual
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
-        const fechaHoy = formatDate(hoy);  // Fecha de hoy en formato YYYY-MM-DD
+        const fechaHoy = formatDate(hoy); 
 
-        console.log("Fecha de hoy:", fechaHoy); // Para depuración
-        console.log("Registros recibidos:", registros); // Para depuración
+        console.log("Fecha de hoy:", fechaHoy);
+        console.log("Registros recibidos:", registros);
 
-        // Verificamos la fecha de cada registro antes de compararlos
         registros.forEach((row, index) => {
-          console.log(`Registro ${index} - Fecha: ${row[0]}`); // Para depuración
+          console.log(`Registro ${index} - Fecha: ${row[0]}`);
         });
 
-        return registros.filter(row => formatDate(row[0]) === fechaHoy); // Compara la fecha del registro con la fecha de hoy
+        return registros.filter(row => {
+          const fechaRegistro = formatDate(row[0]); 
+          console.log(`Comparando fecha del registro ${row[0]} con la fecha de hoy ${fechaHoy}`);
+          return fechaRegistro === fechaHoy;
+        });
       }
 
-      /* RESTAURAR VALORES GUARDADOS */
       window.addEventListener("load", function () {
         const exportadora = localStorage.getItem("exportadora");
         const variedad = localStorage.getItem("variedad");
@@ -232,11 +229,9 @@
         if (variedad) document.getElementById("variedad").value = variedad;
         if (lote) document.getElementById("lote").value = lote;
 
-        // Cargar registros al abrir (sin login)
         cargarRegistros();
       });
 
-      /* LOGIN */
       function ingresarOperador() {
         const nombre = document.getElementById("nombreOperador").value.trim();
         const clave = document.getElementById("claveOperador").value.trim();
@@ -250,21 +245,18 @@
           operadorData.operador = nombre;
           document.getElementById("operador").value = operadorData.operador;
 
-          // Ocultar el login y mostrar el formulario y registros
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("registrosCard").classList.remove("hidden");
           document.getElementById("formCard").classList.remove("hidden");
           document.getElementById("app").classList.remove("hidden");
           document.getElementById("salida").focus();
 
-          // refrescar registros también
           cargarRegistros();
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
       }
 
-      /* GUARDAR REGISTRO */
       document.getElementById("form").addEventListener("submit", function (e) {
         e.preventDefault();
 
@@ -287,12 +279,10 @@
           .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
 
-            // Persistentes
             localStorage.setItem("exportadora", data.exportadora);
             localStorage.setItem("variedad", data.variedad);
             localStorage.setItem("lote", data.lote);
 
-            // Limpiar SOLO variables
             document.getElementById("calibre").value = "";
             document.getElementById("peso").value = "";
             document.getElementById("categoria").value = "";
@@ -306,7 +296,6 @@
           .catch(err => console.error("Error guardando:", err));
       });
 
-      /* CARGAR REGISTROS */
       function cargarRegistros() {
         fetch(SCRIPT_URL)
           .then(res => res.json())
@@ -314,10 +303,8 @@
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
 
-            // Filtrar registros solo de hoy
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            // Depuración: Verificar los registros filtrados
             console.log("Registros filtrados para hoy:", registrosFiltrados);
 
             if (registrosFiltrados.length === 0) {
