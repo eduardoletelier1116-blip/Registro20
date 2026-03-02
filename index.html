@@ -262,6 +262,12 @@
           // Obtener los calibres y pesos únicos
           const calibresUnicos = obtenerCalibresUnicos(pesos);
           const pesosUnicos = obtenerPesosUnicos(pesos);
+
+          // Comprobar si los datos existen
+          if (pesosUnicos.length === 0 || calibresUnicos.length === 0) {
+            console.error('No se encontraron registros válidos.');
+            return;
+          }
           
           var options = {
             title: 'Pesos de las Cajas vs Calibre',
@@ -293,7 +299,7 @@
       function createTicks(min, max, step) {
         const ticks = [];
         for (let i = min; i <= max; i += step) {
-          ticks.push(i);
+          ticks.push(i.toFixed(1));  // Añadimos los ticks con un decimal
         }
         return ticks;
       }
