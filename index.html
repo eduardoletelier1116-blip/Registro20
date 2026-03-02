@@ -110,7 +110,6 @@
 
   <body>
     <header>
-      <!-- Asegúrate de que la ruta de la imagen sea correcta -->
       <img src="https://raw.githubusercontent.com/eduardoletelier1116-blip/app-pesaje-manzana/main/fondo-blanco.jpg" class="logo" alt="Fresh-Pak">
       Registro de Pesos
       <div class="codigo-empresa">R02 POE 29</div>
@@ -209,9 +208,7 @@
         lote: ""
       };
 
-      // Función de formateo de fecha
       function formatDate(date) {
-        // Verificamos si 'date' es un objeto Date
         if (date instanceof Date) {
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -219,59 +216,57 @@
           return `${year}-${month}-${day}`;
         }
 
-        // Si la fecha es un string en formato 'DD/MM/YYYY'
         if (typeof date === 'string' && date.includes('/')) {
-          const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
+          const parts = date.split('/');
           const day = String(parts[0]).padStart(2, '0');
           const month = String(parts[1]).padStart(2, '0');
           const year = parts[2];
           return `${year}-${month}-${day}`;
         }
 
-        // Si no es un formato esperado, retornamos la fecha original
         return date;
       }
 
-      // Filtra registros solo para el día actual
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
         const fechaHoy = formatDate(hoy); 
 
-        console.log("Fecha de hoy:", fechaHoy);
-        console.log("Registros recibidos:", registros);
-
-        registros.forEach((row, index) => {
-          console.log(`Registro ${index} - Fecha: ${row[0]}`);
-        });
-
-        return registros.filter(row => {
-          const fechaRegistro = formatDate(row[0]); 
-          console.log(`Comparando fecha del registro ${row[0]} con la fecha de hoy ${fechaHoy}`);
-          return fechaRegistro === fechaHoy;
-        });
+        return registros.filter(row => formatDate(row[0]) === fechaHoy);
       }
 
       function dibujarGrafico(pesos) {
-        google.charts.load('current', {'packages':['corechart', 'bar']});
+        google.charts.load('current', {'packages':['corechart', 'scatter']});
         google.charts.setOnLoadCallback(function() {
           var data = new google.visualization.DataTable();
-          data.addColumn('string', 'Caja');
           data.addColumn('number', 'Peso (kg)');
-          
-          // Rellenamos los datos del gráfico con el array 'pesos'
-          pesos.forEach(function(registro, index) {
-            data.addRow([`Caja ${index + 1}`, parseFloat(registro[9])]); // Registro[9] es el peso
-          });
+          data.addColumn('number', 'Calibre');
+
+          const calibres = pesos.map(row => parseFloat(row[5]));  // Calibre de la caja
+          const pesosCaja = pesos.map(row => parseFloat(row[9]));  // Peso de la caja
+
+          // Añadir los datos de cada caja al gráfico
+          for (let i = 0; i < calibres.length; i++) {
+            data.addRow([pesosCaja[i], calibres[i]]);
+          }
 
           var options = {
-            title: 'Pesos de las Cajas',
-            hAxis: {title: 'Caja', minValue: 0},
-            vAxis: {title: 'Peso (kg)'},
-            legend: {position: 'none'},
-            chartArea: {width: '80%', height: '70%'}
+            title: 'Pesos de las Cajas vs Calibre',
+            hAxis: {
+              title: 'Peso (kg)',
+              minValue: Math.min(...pesosCaja) - 0.1,
+              maxValue: Math.max(...pesosCaja) + 0.1,
+              format: '0.0'
+            },
+            vAxis: {
+              title: 'Calibre',
+              minValue: Math.min(...calibres) - 0.5,
+              maxValue: Math.max(...calibres) + 0.5
+            },
+            legend: { position: 'none' },
+            chartArea: { width: '80%', height: '70%' }
           };
 
-          var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+          var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));
           chart.draw(data, options);
         });
       }
@@ -360,8 +355,6 @@
             tbody.innerHTML = "";
 
             const registrosFiltrados = filtrarRegistrosPorDia(data);
-
-            console.log("Registros filtrados para hoy:", registrosFiltrados);
 
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
