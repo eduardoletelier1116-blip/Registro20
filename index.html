@@ -240,7 +240,7 @@
       }
 
       function dibujarGrafico(pesos) {
-        google.charts.load('current', {'packages':['corechart', 'scatter']});
+        google.charts.load('current', {'packages':['corechart', 'line']});
         google.charts.setOnLoadCallback(function() {
           var data = new google.visualization.DataTable();
           data.addColumn('number', 'Peso (kg)');
@@ -272,10 +272,13 @@
               maxValue: Math.max(...calibresUnicos) + 0.5
             },
             legend: { position: 'none' },
-            chartArea: { width: '80%', height: '70%' }
+            chartArea: { width: '80%', height: '70%' },
+            series: {
+              0: { pointShape: 'circle', pointSize: 6 } // Puntos redondos para cada caja
+            }
           };
 
-          var chart = new google.visualization.ScatterChart(document.getElementById('chart_div'));
+          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
           chart.draw(data, options);
         });
       }
