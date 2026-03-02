@@ -195,20 +195,35 @@
         }
       });
 
-      // Filtra los registros para el día de hoy
-      function filtrarRegistrosPorDia(registros) {
-        const hoy = new Date();
-        const fechaHoy = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-        console.log('Fecha de hoy:', fechaHoy);  // Verifica la fecha actual
+      // Función para guardar los datos
+      function guardarDatos() {
+        const data = {
+          operador: document.getElementById("nombreOperador").value,
+          exportadora: document.getElementById("exportadora").value,
+          salida: document.getElementById("salida").value,
+          calibre: document.getElementById("calibre").value,
+          categoria: document.getElementById("categoria").value,
+          variedad: document.getElementById("variedad").value,
+          lote: document.getElementById("lote").value,
+          peso: document.getElementById("peso").value
+        };
 
-        // Verifica si el formato de fecha está correcto
-        registros.forEach((registro, index) => {
-          console.log(`Registro ${index} - Fecha: ${registro[0]}`);
-        });
-
-        return registros.filter(row => {
-          const fechaRegistro = new Date(row[0]).toISOString().split('T')[0]; // Convertir fecha de registro a formato YYYY-MM-DD
-          return fechaRegistro === fechaHoy;
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: new URLSearchParams(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            alert("Registro guardado correctamente");
+            cargarRegistros(); // Recarga los registros después de guardar
+          } else {
+            alert("Error al guardar el registro");
+          }
+        })
+        .catch(err => {
+          alert("Error al conectar con el servidor");
+          console.error("Error:", err);
         });
       }
 
@@ -217,15 +232,10 @@
         fetch(SCRIPT_URL)
           .then(res => res.json())
           .then(data => {
-            console.log('Datos recibidos desde el servidor:', data);  // Verifica los datos recibidos
             const registrosFiltrados = filtrarRegistrosPorDia(data);
             const calibres = registrosFiltrados.map(row => row[5]); // Calibre
             const pesos = registrosFiltrados.map(row => row[9]); // Peso
             
-            if (calibres.length === 0) {
-              console.log('No se encontraron registros para hoy.');
-            }
-
             // Actualiza el gráfico con los datos filtrados
             pesoChart.data.labels = calibres;
             pesoChart.data.datasets[0].data = pesos;
@@ -258,27 +268,20 @@
           .catch(err => console.error("Error cargando registros:", err));
       }
 
+      // Filtrar registros por fecha
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const fechaHoy = hoy.toLocaleDateString('es-CL'); // Formato dd/MM/yyyy
+        return registros.filter(row => {
+          const fechaRegistro = row[0]; // La fecha está en formato dd/MM/yyyy en la base de datos
+          return fechaRegistro === fechaHoy;
+        });
+      }
+
+      // Llamada inicial para cargar registros al cargar la página
       window.addEventListener("load", function () {
         cargarRegistros();
       });
-
-      function ingresarOperador() {
-        const nombre = document.getElementById("nombreOperador").value.trim();
-        const clave = document.getElementById("claveOperador").value.trim();
-
-        if (!nombre || !clave) {
-          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
-          return;
-        }
-
-        if (clave === "fresh") {
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("registrosCard").classList.remove("hidden");
-          cargarRegistros();
-        } else {
-          document.getElementById("msgLogin").innerText = "Clave incorrecta";
-        }
-      }
     </script>
   </body>
 </html>
