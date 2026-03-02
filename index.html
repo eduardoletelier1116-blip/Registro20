@@ -234,6 +234,11 @@
         return registros.filter(row => formatDate(row[0]) === fechaHoy);
       }
 
+      function obtenerCalibresUnicos(pesos) {
+        const calibres = pesos.map(row => parseFloat(row[5]));  // Calibre de la caja
+        return [...new Set(calibres)];  // Devuelve los calibres únicos
+      }
+
       function dibujarGrafico(pesos) {
         google.charts.load('current', {'packages':['corechart', 'scatter']});
         google.charts.setOnLoadCallback(function() {
@@ -249,6 +254,9 @@
             data.addRow([pesosCaja[i], calibres[i]]);
           }
 
+          // Obtener los calibres únicos para el eje Y
+          const calibresUnicos = obtenerCalibresUnicos(pesos);
+          
           var options = {
             title: 'Pesos de las Cajas vs Calibre',
             hAxis: {
@@ -259,8 +267,9 @@
             },
             vAxis: {
               title: 'Calibre',
-              minValue: Math.min(...calibres) - 0.5,
-              maxValue: Math.max(...calibres) + 0.5
+              ticks: calibresUnicos,  // Configuramos los calibres registrados
+              minValue: Math.min(...calibresUnicos) - 0.5,
+              maxValue: Math.max(...calibresUnicos) + 0.5
             },
             legend: { position: 'none' },
             chartArea: { width: '80%', height: '70%' }
