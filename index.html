@@ -200,7 +200,10 @@
         const hoy = new Date();
         const fechaHoy = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
 
-        return registros.filter(row => row[0].split('T')[0] === fechaHoy); // Filtra por fecha
+        return registros.filter(row => {
+          const fechaRegistro = new Date(row[0]).toISOString().split('T')[0]; // Convertir fecha de registro a formato YYYY-MM-DD
+          return fechaRegistro === fechaHoy;
+        });
       }
 
       // Cargar registros y actualizar gráfico
@@ -216,6 +219,30 @@
             pesoChart.data.labels = calibres;
             pesoChart.data.datasets[0].data = pesos;
             pesoChart.update();
+
+            // Actualiza la tabla de registros
+            const tbody = document.getElementById("tabla");
+            tbody.innerHTML = "";
+
+            if (registrosFiltrados.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
+            } else {
+              registrosFiltrados.reverse().forEach(row => {
+                tbody.innerHTML += ` 
+                  <tr>
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+                    <td>${row[7]}</td>
+                    <td>${row[8]}</td>
+                    <td>${row[9]}</td>
+                  </tr>`;
+              });
+            }
           })
           .catch(err => console.error("Error cargando registros:", err));
       }
