@@ -269,7 +269,8 @@
               title: 'Peso (kg)',
               minValue: Math.min(...pesosUnicos) - 0.1,
               maxValue: Math.max(...pesosUnicos) + 0.1,
-              format: '0.0'
+              format: '0.0',
+              ticks: createTicks(Math.min(...pesosUnicos), Math.max(...pesosUnicos), 0.1) // Ticks con 0.1 de diferencia
             },
             vAxis: {
               title: 'Calibre',
@@ -287,6 +288,14 @@
           var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
           chart.draw(data, options);
         });
+      }
+
+      function createTicks(min, max, step) {
+        const ticks = [];
+        for (let i = min; i <= max; i += step) {
+          ticks.push(i);
+        }
+        return ticks;
       }
 
       window.addEventListener("load", function () {
