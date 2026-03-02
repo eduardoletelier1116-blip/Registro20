@@ -239,6 +239,11 @@
         return [...new Set(calibres)];  // Devuelve los calibres únicos
       }
 
+      function obtenerPesosUnicos(pesos) {
+        const pesosCaja = pesos.map(row => parseFloat(row[9]));  // Peso de la caja
+        return [...new Set(pesosCaja)];  // Devuelve los pesos únicos
+      }
+
       function dibujarGrafico(pesos) {
         google.charts.load('current', {'packages':['corechart', 'line']});
         google.charts.setOnLoadCallback(function() {
@@ -254,15 +259,16 @@
             data.addRow([pesosCaja[i], calibres[i]]);
           }
 
-          // Obtener los calibres únicos para el eje Y
+          // Obtener los calibres y pesos únicos
           const calibresUnicos = obtenerCalibresUnicos(pesos);
+          const pesosUnicos = obtenerPesosUnicos(pesos);
           
           var options = {
             title: 'Pesos de las Cajas vs Calibre',
             hAxis: {
               title: 'Peso (kg)',
-              minValue: Math.min(...pesosCaja) - 0.1,
-              maxValue: Math.max(...pesosCaja) + 0.1,
+              minValue: Math.min(...pesosUnicos) - 0.1,
+              maxValue: Math.max(...pesosUnicos) + 0.1,
               format: '0.0'
             },
             vAxis: {
