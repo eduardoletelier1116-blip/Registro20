@@ -97,13 +97,24 @@
       .hidden {
         display: none;
       }
+
+      .login-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .login-card, .grafico-card {
+        width: 45%;
+      }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body>
     <header>
-      <!-- Asegúrate de que la ruta de la imagen sea correcta -->
-      <img src="ruta-correcta/Fondo Blanco.jpg" class="logo" alt="Fresh-Pak">
+      <img src="https://raw.githubusercontent.com/eduardoletelier1116-blip/app-pesaje-manzana/main/fondo-blanco.jpg" class="logo" alt="Fresh-Pak">
       Registro de Pesos
       <div class="codigo-empresa">R02 POE 29</div>
     </header>
@@ -124,6 +135,7 @@
           <select id="exportadora" required>
             <option value="">Exportadora</option>
             <option>Fruclem</option>
+            <option>SK Gyan</option>
             <option>JHB</option>
             <option>Talamaya</option>
           </select>
@@ -174,179 +186,70 @@
           <tbody id="tabla"></tbody>
         </table>
       </div>
+
+      <div class="grafico-card">
+        <canvas id="graficoCalibres" width="400" height="200"></canvas>
+      </div>
     </div>
 
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
-      const salidaSelect = document.getElementById("salida");
-
-      for (let i = 1; i <= 41; i++) {
-        let option = document.createElement("option");
-        option.value = i;
-        option.text = i;
-        salidaSelect.appendChild(option);
-      }
-
-      let nombreActual = "";
-      let operadorData = {
-        operador: "",
-        exportadora: "",
-        variedad: "",
-        lote: ""
-      };
-
-      // Función de formateo de fecha
-      function formatDate(date) {
-        // Verificamos si 'date' es un objeto Date
-        if (date instanceof Date) {
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${year}-${month}-${day}`;
-        }
-
-        // Si la fecha es un string en formato 'DD/MM/YYYY'
-        if (typeof date === 'string' && date.includes('/')) {
-          const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
-          const day = String(parts[0]).padStart(2, '0');
-          const month = String(parts[1]).padStart(2, '0');
-          const year = parts[2];
-          return `${year}-${month}-${day}`;
-        }
-
-        // Si no es un formato esperado, retornamos la fecha original
-        return date;
-      }
-
-      // Filtra registros solo para el día actual
-      function filtrarRegistrosPorDia(registros) {
-        const hoy = new Date();
-        const fechaHoy = formatDate(hoy); 
-
-        console.log("Fecha de hoy:", fechaHoy);
-        console.log("Registros recibidos:", registros);
-
-        registros.forEach((row, index) => {
-          console.log(`Registro ${index} - Fecha: ${row[0]}`);
-        });
-
-        return registros.filter(row => {
-          const fechaRegistro = formatDate(row[0]); 
-          console.log(`Comparando fecha del registro ${row[0]} con la fecha de hoy ${fechaHoy}`);
-          return fechaRegistro === fechaHoy;
-        });
-      }
-
-      window.addEventListener("load", function () {
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
-
-        cargarRegistros();
-      });
-
-      function ingresarOperador() {
-        const nombre = document.getElementById("nombreOperador").value.trim();
-        const clave = document.getElementById("claveOperador").value.trim();
-
-        if (!nombre || !clave) {
-          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
-          return;
-        }
-
-        if (clave === "fresh") {
-          operadorData.operador = nombre;
-          document.getElementById("operador").value = operadorData.operador;
-
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("registrosCard").classList.remove("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
-          document.getElementById("app").classList.remove("hidden");
-          document.getElementById("salida").focus();
-
-          cargarRegistros();
-        } else {
-          document.getElementById("msgLogin").innerText = "Clave incorrecta";
-        }
-      }
-
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const data = {
-          operador: operadorData.operador,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
-
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
-            document.getElementById("msg").innerText = "Guardado correctamente";
-
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
-
-            document.getElementById("calibre").value = "";
-            document.getElementById("peso").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("salida").value = "";
-            document.getElementById("operador").value = operadorData.operador;
-
-            document.getElementById("salida").focus();
-
-            setTimeout(cargarRegistros, 400);
-          })
-          .catch(err => console.error("Error guardando:", err));
-      });
-
-      function cargarRegistros() {
+      
+      function obtenerRegistrosDelDia() {
         fetch(SCRIPT_URL)
-          .then(res => res.json())
+          .then(response => response.json())
           .then(data => {
-            const tbody = document.getElementById("tabla");
-            tbody.innerHTML = "";
+            const fechaHoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            const registrosDelDia = data.filter(item => {
+              const [dia, mes, anio] = item[0].split("/"); // Suponiendo que la fecha está en formato dd/MM/yyyy
+              const fechaItem = `${anio}-${mes}-${dia}`; // Formato YYYY-MM-DD
+              return fechaItem === fechaHoy; // Comparar con la fecha de hoy
+            });
 
-            const registrosFiltrados = filtrarRegistrosPorDia(data);
+            const calibres = registrosDelDia.map(item => item[5]); // El calibre está en la columna 6 (índice 5)
+            const cantidadPorCalibre = {};
 
-            console.log("Registros filtrados para hoy:", registrosFiltrados);
+            calibres.forEach(calibre => {
+              cantidadPorCalibre[calibre] = (cantidadPorCalibre[calibre] || 0) + 1;
+            });
 
-            if (registrosFiltrados.length === 0) {
-              tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
-            } else {
-              registrosFiltrados.reverse().forEach(row => {
-                tbody.innerHTML += `
-                  <tr>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td>${row[7]}</td>
-                    <td>${row[8]}</td>
-                    <td>${row[9]}</td>
-                  </tr>
-                `;
-              });
-            }
+            const etiquetas = Object.keys(cantidadPorCalibre);
+            const cantidades = Object.values(cantidadPorCalibre);
+
+            actualizarGrafico(etiquetas, cantidades);
           })
-          .catch(err => console.error("Error cargando registros:", err));
+          .catch(error => console.error("Error al obtener registros:", error));
       }
+
+      function actualizarGrafico(etiquetas, cantidades) {
+        const ctx = document.getElementById('graficoCalibres').getContext('2d');
+        
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: etiquetas,
+            datasets: [{
+              label: 'Cantidad de Calibres',
+              data: cantidades,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+
+      window.onload = function () {
+        obtenerRegistrosDelDia(); // Cargar datos y mostrar el gráfico
+      };
     </script>
   </body>
 </html>
