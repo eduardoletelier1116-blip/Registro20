@@ -106,11 +106,17 @@
         padding: 20px;
       }
 
-      .login-card, .grafico-card {
+      .login-card {
         width: 45%;
       }
 
-      /* Estilos adicionales para mostrar el peso */
+      .grafico-card {
+        width: 45%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
       .peso-card {
         background: white;
         padding: 10px;
@@ -119,6 +125,13 @@
         margin-top: 20px;
         text-align: center;
       }
+
+      /* Gráfico */
+      .chart-container {
+        width: 100%;
+        height: 300px;
+      }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
@@ -141,13 +154,17 @@
         </div>
 
         <div class="grafico-card">
-          <canvas id="graficoCalibres" width="400" height="200"></canvas>
-        </div>
-      </div>
+          <!-- Gráfico de calibres -->
+          <div class="chart-container">
+            <canvas id="graficoCalibres"></canvas>
+          </div>
 
-      <div class="peso-card">
-        <h4>Peso Registrado Hoy</h4>
-        <p id="pesoRegistrado">0 kg</p>
+          <!-- Peso total hoy -->
+          <div class="peso-card">
+            <h4>Peso Registrado Hoy</h4>
+            <p id="pesoRegistrado">0 kg</p>
+          </div>
+        </div>
       </div>
 
       <div class="card" id="registrosCard">
