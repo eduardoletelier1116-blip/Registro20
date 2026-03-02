@@ -40,6 +40,8 @@
         max-width: 1200px;
         margin: 20px auto;
         padding: 20px;
+        display: flex;
+        justify-content: space-between;
       }
 
       .card {
@@ -50,8 +52,16 @@
         margin-bottom: 20px;
       }
 
-      input,
-      select {
+      .chart-container {
+        width: 55%;
+        height: 300px;
+      }
+
+      .login-container {
+        width: 40%;
+      }
+
+      input, select {
         width: 100%;
         padding: 8px;
         margin: 5px 0;
@@ -97,42 +107,8 @@
       .hidden {
         display: none;
       }
-
-      /* Flexbox para que el gráfico esté junto al login */
-      .login-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px;
-      }
-
-      .login-card {
-        width: 45%;
-      }
-
-      .grafico-card {
-        width: 45%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .peso-card {
-        background: white;
-        padding: 10px;
-        border-radius: 12px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        margin-top: 20px;
-        text-align: center;
-      }
-
-      /* Gráfico */
-      .chart-container {
-        width: 100%;
-        height: 300px;
-      }
-
     </style>
+    <!-- Agregar Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
@@ -145,28 +121,22 @@
 
     <div class="container">
       <div class="login-container">
-        <div class="login-card">
+        <div class="card" id="loginCard">
           <h3>Ingreso</h3>
           <input type="text" id="nombreOperador" placeholder="Nombre operador">
           <input type="password" id="claveOperador" placeholder="Clave operador">
           <button onclick="ingresarOperador()">Operador</button>
           <p id="msgLogin" style="color:red;"></p>
         </div>
-
-        <div class="grafico-card">
-          <!-- Gráfico de calibres -->
-          <div class="chart-container">
-            <canvas id="graficoCalibres"></canvas>
-          </div>
-
-          <!-- Peso total hoy -->
-          <div class="peso-card">
-            <h4>Peso Registrado Hoy</h4>
-            <p id="pesoRegistrado">0 kg</p>
-          </div>
-        </div>
       </div>
 
+      <!-- Contenedor para el gráfico -->
+      <div class="chart-container">
+        <canvas id="pesoChart"></canvas>
+      </div>
+    </div>
+
+    <div class="container">
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <table>
@@ -191,66 +161,86 @@
 
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
-
-      function obtenerRegistrosDelDia() {
-        fetch(SCRIPT_URL)
-          .then(response => response.json())
-          .then(data => {
-            const fechaHoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
-            const registrosDelDia = data.filter(item => {
-              const [dia, mes, anio] = item[0].split("/"); // Suponiendo que la fecha está en formato dd/MM/yyyy
-              const fechaItem = `${anio}-${mes}-${dia}`; // Formato YYYY-MM-DD
-              return fechaItem === fechaHoy; // Comparar con la fecha de hoy
-            });
-
-            const calibres = registrosDelDia.map(item => item[5]); // El calibre está en la columna 6 (índice 5)
-            const cantidadPorCalibre = {};
-
-            calibres.forEach(calibre => {
-              cantidadPorCalibre[calibre] = (cantidadPorCalibre[calibre] || 0) + 1;
-            });
-
-            const etiquetas = Object.keys(cantidadPorCalibre);
-            const cantidades = Object.values(cantidadPorCalibre);
-
-            // Mostrar el peso total del día
-            const pesoTotal = registrosDelDia.reduce((sum, item) => sum + parseFloat(item[9]), 0);
-            document.getElementById('pesoRegistrado').innerText = `${pesoTotal.toFixed(2)} kg`;
-
-            actualizarGrafico(etiquetas, cantidades);
-          })
-          .catch(error => console.error("Error al obtener registros:", error));
-      }
-
-      function actualizarGrafico(etiquetas, cantidades) {
-        const ctx = document.getElementById('graficoCalibres').getContext('2d');
-        
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: etiquetas,
-            datasets: [{
-              label: 'Cantidad de Calibres',
-              data: cantidades,
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
-              borderColor: 'rgba(54, 162, 235, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true
+      
+      // Inicializar el gráfico
+      var ctx = document.getElementById('pesoChart').getContext('2d');
+      var pesoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [], // Aquí se insertarán los calibres
+          datasets: [{
+            label: 'Peso (kg)',
+            data: [], // Aquí se insertarán los pesos
+            borderColor: '#2a5298',
+            fill: false,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Calibre'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Peso (kg)'
               }
             }
           }
-        });
+        }
+      });
+
+      // Filtra los registros para el día de hoy
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+        return registros.filter(row => row[0].split('T')[0] === fechaHoy); // Filtra por fecha
       }
 
-      window.onload = function () {
-        obtenerRegistrosDelDia(); // Cargar datos y mostrar el gráfico
-      };
+      // Cargar registros y actualizar gráfico
+      function cargarRegistros() {
+        fetch(SCRIPT_URL)
+          .then(res => res.json())
+          .then(data => {
+            const registrosFiltrados = filtrarRegistrosPorDia(data);
+            const calibres = registrosFiltrados.map(row => row[5]); // Calibre
+            const pesos = registrosFiltrados.map(row => row[9]); // Peso
+            
+            // Actualiza el gráfico con los datos filtrados
+            pesoChart.data.labels = calibres;
+            pesoChart.data.datasets[0].data = pesos;
+            pesoChart.update();
+          })
+          .catch(err => console.error("Error cargando registros:", err));
+      }
+
+      window.addEventListener("load", function () {
+        cargarRegistros();
+      });
+
+      function ingresarOperador() {
+        const nombre = document.getElementById("nombreOperador").value.trim();
+        const clave = document.getElementById("claveOperador").value.trim();
+
+        if (!nombre || !clave) {
+          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
+          return;
+        }
+
+        if (clave === "fresh") {
+          document.getElementById("loginCard").classList.add("hidden");
+          document.getElementById("registrosCard").classList.remove("hidden");
+          cargarRegistros();
+        } else {
+          document.getElementById("msgLogin").innerText = "Clave incorrecta";
+        }
+      }
     </script>
   </body>
 </html>
