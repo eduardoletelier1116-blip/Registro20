@@ -199,6 +199,12 @@
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
         const fechaHoy = hoy.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        console.log('Fecha de hoy:', fechaHoy);  // Verifica la fecha actual
+
+        // Verifica si el formato de fecha está correcto
+        registros.forEach((registro, index) => {
+          console.log(`Registro ${index} - Fecha: ${registro[0]}`);
+        });
 
         return registros.filter(row => {
           const fechaRegistro = new Date(row[0]).toISOString().split('T')[0]; // Convertir fecha de registro a formato YYYY-MM-DD
@@ -211,10 +217,15 @@
         fetch(SCRIPT_URL)
           .then(res => res.json())
           .then(data => {
+            console.log('Datos recibidos desde el servidor:', data);  // Verifica los datos recibidos
             const registrosFiltrados = filtrarRegistrosPorDia(data);
             const calibres = registrosFiltrados.map(row => row[5]); // Calibre
             const pesos = registrosFiltrados.map(row => row[9]); // Peso
             
+            if (calibres.length === 0) {
+              console.log('No se encontraron registros para hoy.');
+            }
+
             // Actualiza el gráfico con los datos filtrados
             pesoChart.data.labels = calibres;
             pesoChart.data.datasets[0].data = pesos;
