@@ -208,7 +208,8 @@
         lote: ""
       };
 
-      let historialPesos = {}; // Para almacenar los pesos por calibre
+      // Usamos un objeto para almacenar los pesos por calibre (clave: calibre, valor: lista de pesos)
+      let historialPesos = {}; 
 
       function formatDate(date) {
         if (date instanceof Date) {
@@ -365,7 +366,7 @@
                 `;
               });
 
-              // Llamamos a la función para dibujar el gráfico
+              // Llamamos a la función para dibujar el gráfico para cada calibre
               const calibresRegistrados = [...new Set(registrosFiltrados.map(row => row[5]))];
               calibresRegistrados.forEach(calibre => dibujarGrafico(calibre));
             }
