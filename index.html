@@ -200,7 +200,6 @@
         salidaSelect.appendChild(option);
       }
 
-      let nombreActual = "";
       let operadorData = {
         operador: "",
         exportadora: "",
@@ -208,28 +207,9 @@
         lote: ""
       };
 
-      // Usamos un objeto para almacenar los pesos por calibre (clave: calibre, valor: lista de pesos)
-      let historialPesos = {}; 
+      let historialPesos = {};  // Para almacenar los pesos por calibre y día
 
-      function formatDate(date) {
-        if (date instanceof Date) {
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${year}-${month}-${day}`;
-        }
-
-        if (typeof date === 'string' && date.includes('/')) {
-          const parts = date.split('/');
-          const day = String(parts[0]).padStart(2, '0');
-          const month = String(parts[1]).padStart(2, '0');
-          const year = parts[2];
-          return `${year}-${month}-${day}`;
-        }
-
-        return date;
-      }
-
+      // Función para obtener los registros del día
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
         const fechaHoy = formatDate(hoy); 
@@ -237,7 +217,15 @@
         return registros.filter(row => formatDate(row[0]) === fechaHoy);
       }
 
-      // Dibujar gráfico de evolución de pesos por calibre
+      // Convertir la fecha a formato yyyy-MM-dd
+      function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${year}-${month}-${day}`;
+      }
+
+      // Dibujar gráfico para el calibre seleccionado
       function dibujarGrafico(calibreSeleccionado) {
         google.charts.load('current', {'packages':['corechart', 'line']});
         google.charts.setOnLoadCallback(function() {
@@ -248,7 +236,13 @@
           // Obtener registros del calibre seleccionado
           const registros = historialPesos[calibreSeleccionado] || [];
 
-          // Añadir los datos de los registros del calibre seleccionado
+          // Si no hay registros para este calibre, no dibujar el gráfico
+          if (registros.length === 0) {
+            document.getElementById('chart_div').innerHTML = 'No hay registros para este calibre hoy.';
+            return;
+          }
+
+          // Añadir los registros al gráfico
           registros.forEach((registro, index) => {
             data.addRow([index + 1, registro.peso]); // El índice + 1 será el "registro"
           });
@@ -263,7 +257,7 @@
             },
             chartArea: { width: '80%', height: '70%' },
             series: {
-              0: { pointShape: 'circle', pointSize: 6 } // Puntos redondos para cada caja
+              0: { pointShape: 'circle', pointSize: 6 }
             }
           };
 
