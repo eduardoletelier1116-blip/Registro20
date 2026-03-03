@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Registro de Pesos</title>
+    <title>Registro de Pesos por Calibre</title>
     <style>
       body {
         font-family: Segoe UI;
@@ -111,7 +111,7 @@
   <body>
     <header>
       <img src="https://raw.githubusercontent.com/eduardoletelier1116-blip/app-pesaje-manzana/main/fondo-blanco.jpg" class="logo" alt="Fresh-Pak">
-      Registro de Pesos
+      Registro de Pesos por Calibre
       <div class="codigo-empresa">R02 POE 29</div>
     </header>
 
@@ -184,7 +184,7 @@
       </div>
 
       <div class="card">
-        <h3>Gráfico de Pesos</h3>
+        <h3>Gráfico de Evolución del Peso por Calibre</h3>
         <div id="chart_div"></div>
       </div>
     </div>
@@ -208,7 +208,7 @@
         lote: ""
       };
 
-      let historialPesos = []; // Para almacenar el historial de registros
+      let historialPesos = {}; // Para almacenar los pesos por calibre
 
       function formatDate(date) {
         if (date instanceof Date) {
@@ -236,47 +236,30 @@
         return registros.filter(row => formatDate(row[0]) === fechaHoy);
       }
 
-      function obtenerCalibresUnicos(pesos) {
-        const calibres = pesos.map(row => parseFloat(row[5]));  // Calibre de la caja
-        return [...new Set(calibres)];  // Devuelve los calibres únicos
-      }
-
-      function obtenerPesosUnicos(pesos) {
-        const pesosCaja = pesos.map(row => parseFloat(row[9]));  // Peso de la caja
-        return [...new Set(pesosCaja)];  // Devuelve los pesos únicos
-      }
-
-      function dibujarGrafico() {
+      // Dibujar gráfico de evolución de pesos por calibre
+      function dibujarGrafico(calibreSeleccionado) {
         google.charts.load('current', {'packages':['corechart', 'line']});
         google.charts.setOnLoadCallback(function() {
           var data = new google.visualization.DataTable();
+          data.addColumn('number', 'Registro');
           data.addColumn('number', 'Peso (kg)');
-          data.addColumn('number', 'Calibre');
 
-          // Añadir los datos de cada caja al gráfico desde el historial
-          for (let i = 0; i < historialPesos.length; i++) {
-            data.addRow([historialPesos[i].peso, historialPesos[i].calibre]);
-          }
+          // Obtener registros del calibre seleccionado
+          const registros = historialPesos[calibreSeleccionado] || [];
 
-          const calibresUnicos = obtenerCalibresUnicos(historialPesos);
-          const pesosUnicos = obtenerPesosUnicos(historialPesos);
+          // Añadir los datos de los registros del calibre seleccionado
+          registros.forEach((registro, index) => {
+            data.addRow([index + 1, registro.peso]); // El índice + 1 será el "registro"
+          });
 
           var options = {
-            title: 'Pesos de las Cajas vs Calibre',
+            title: `Evolución del Peso para el Calibre ${calibreSeleccionado}`,
             hAxis: {
-              title: 'Peso (kg)',
-              minValue: Math.min(...pesosUnicos) - 0.1,
-              maxValue: Math.max(...pesosUnicos) + 0.1,
-              format: '0.0',
-              ticks: createTicks(Math.min(...pesosUnicos), Math.max(...pesosUnicos), 0.1) // Ticks con 0.1 de diferencia
+              title: 'Número de Registro',
             },
             vAxis: {
-              title: 'Calibre',
-              ticks: calibresUnicos,  // Configuramos los calibres registrados
-              minValue: Math.min(...calibresUnicos) - 0.5,
-              maxValue: Math.max(...calibresUnicos) + 0.5
+              title: 'Peso (kg)',
             },
-            legend: { position: 'none' },
             chartArea: { width: '80%', height: '70%' },
             series: {
               0: { pointShape: 'circle', pointSize: 6 } // Puntos redondos para cada caja
@@ -288,23 +271,7 @@
         });
       }
 
-      function createTicks(min, max, step) {
-        const ticks = [];
-        for (let i = min; i <= max; i += step) {
-          ticks.push(i.toFixed(1));  // Añadimos los ticks con un decimal
-        }
-        return ticks;
-      }
-
       window.addEventListener("load", function () {
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
-
         cargarRegistros();
       });
 
@@ -355,26 +322,16 @@
           .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
 
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
-
-            document.getElementById("calibre").value = "";
-            document.getElementById("peso").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("salida").value = "";
-            document.getElementById("operador").value = operadorData.operador;
-
-            document.getElementById("salida").focus();
-
-            // Añadir el nuevo registro al historial
-            historialPesos.push({
-              calibre: data.calibre,
+            // Actualizar historial de pesos por calibre
+            if (!historialPesos[data.calibre]) {
+              historialPesos[data.calibre] = [];
+            }
+            historialPesos[data.calibre].push({
               peso: data.peso
             });
 
-            // Actualizar el gráfico
-            setTimeout(dibujarGrafico, 400);
+            // Actualizar el gráfico para el calibre ingresado
+            dibujarGrafico(data.calibre);
           })
           .catch(err => console.error("Error guardando:", err));
       });
@@ -409,7 +366,8 @@
               });
 
               // Llamamos a la función para dibujar el gráfico
-              dibujarGrafico(registrosFiltrados);
+              const calibresRegistrados = [...new Set(registrosFiltrados.map(row => row[5]))];
+              calibresRegistrados.forEach(calibre => dibujarGrafico(calibre));
             }
           })
           .catch(err => console.error("Error cargando registros:", err));
