@@ -208,6 +208,8 @@
         lote: ""
       };
 
+      let historialPesos = []; // Para almacenar el historial de registros
+
       function formatDate(date) {
         if (date instanceof Date) {
           const day = String(date.getDate()).padStart(2, '0');
@@ -244,31 +246,21 @@
         return [...new Set(pesosCaja)];  // Devuelve los pesos únicos
       }
 
-      function dibujarGrafico(pesos) {
+      function dibujarGrafico() {
         google.charts.load('current', {'packages':['corechart', 'line']});
         google.charts.setOnLoadCallback(function() {
           var data = new google.visualization.DataTable();
           data.addColumn('number', 'Peso (kg)');
           data.addColumn('number', 'Calibre');
 
-          const calibres = pesos.map(row => parseFloat(row[5]));  // Calibre de la caja
-          const pesosCaja = pesos.map(row => parseFloat(row[9]));  // Peso de la caja
-
-          // Añadir los datos de cada caja al gráfico
-          for (let i = 0; i < calibres.length; i++) {
-            data.addRow([pesosCaja[i], calibres[i]]);
+          // Añadir los datos de cada caja al gráfico desde el historial
+          for (let i = 0; i < historialPesos.length; i++) {
+            data.addRow([historialPesos[i].peso, historialPesos[i].calibre]);
           }
 
-          // Obtener los calibres y pesos únicos
-          const calibresUnicos = obtenerCalibresUnicos(pesos);
-          const pesosUnicos = obtenerPesosUnicos(pesos);
+          const calibresUnicos = obtenerCalibresUnicos(historialPesos);
+          const pesosUnicos = obtenerPesosUnicos(historialPesos);
 
-          // Comprobar si los datos existen
-          if (pesosUnicos.length === 0 || calibresUnicos.length === 0) {
-            console.error('No se encontraron registros válidos.');
-            return;
-          }
-          
           var options = {
             title: 'Pesos de las Cajas vs Calibre',
             hAxis: {
@@ -375,7 +367,14 @@
 
             document.getElementById("salida").focus();
 
-            setTimeout(cargarRegistros, 400);
+            // Añadir el nuevo registro al historial
+            historialPesos.push({
+              calibre: data.calibre,
+              peso: data.peso
+            });
+
+            // Actualizar el gráfico
+            setTimeout(dibujarGrafico, 400);
           })
           .catch(err => console.error("Error guardando:", err));
       });
