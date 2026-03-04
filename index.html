@@ -204,16 +204,16 @@
               registrosFiltrados.reverse().forEach(row => {
                 tbody.innerHTML += `
                   <tr>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td>${row[7]}</td>
-                    <td>${row[8]}</td>
-                    <td>${row[9]}</td>
+                    <td>${row[0]}</td>  <!-- Fecha -->
+                    <td>${row[1]}</td>  <!-- Hora -->
+                    <td>${row[2]}</td>  <!-- Operador -->
+                    <td>${row[3]}</td>  <!-- Exportadora -->
+                    <td>${row[4]}</td>  <!-- Salida -->
+                    <td>${row[5]}</td>  <!-- Calibre -->
+                    <td>${row[6]}</td>  <!-- Categoría -->
+                    <td>${row[7]}</td>  <!-- Variedad -->
+                    <td>${row[8]}</td>  <!-- Lote -->
+                    <td>${row[9]}</td>  <!-- Peso -->
                   </tr>
                 `;
               });
@@ -229,9 +229,9 @@
         const fechas = [];
 
         registros.forEach(row => {
-          const calibre = row[5];
-          const peso = parseFloat(row[9]);
-          const fecha = row[0];
+          const calibre = row[5];  // Calibre
+          const peso = parseFloat(row[9]);  // Peso
+          const fecha = row[0];  // Fecha
 
           if (!calibres.includes(calibre)) {
             calibres.push(calibre);
@@ -247,18 +247,18 @@
 
         const datasets = calibres.map(calibre => ({
           label: calibre,
-          data: pesos[calibre],
-          borderColor: 'rgba(75, 192, 192, 1)',
-          fill: false,
-          tension: 0.1
+          data: pesos[calibre],  // Los pesos por calibre
+          borderColor: 'rgba(75, 192, 192, 1)',  // Color de la línea
+          fill: false,  // No rellenar el área bajo la línea
+          tension: 0.1   // Para suavizar la línea
         }));
 
         const ctx = document.getElementById('pesoChart').getContext('2d');
         const pesoChart = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: fechas,
-            datasets: datasets
+            labels: fechas,  // Fechas
+            datasets: datasets  // Datos de cada calibre
           },
           options: {
             responsive: true,
@@ -283,10 +283,10 @@
 
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
-        const fechaHoy = hoy.toISOString().split("T")[0];
+        const fechaHoy = hoy.toISOString().split("T")[0];  // Formato yyyy-mm-dd
 
         return registros.filter(row => {
-          const fechaRegistro = row[0];
+          const fechaRegistro = row[0];  // La fecha del registro
           return fechaRegistro === fechaHoy;
         });
       }
