@@ -185,10 +185,38 @@
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
 
+      // Cargar los registros cuando la página cargue
       window.addEventListener("load", function () {
         cargarRegistros();
       });
 
+      // Función para ingresar al sistema (login)
+      function ingresarOperador() {
+        const nombre = document.getElementById("nombreOperador").value.trim();
+        const clave = document.getElementById("claveOperador").value.trim();
+
+        if (!nombre || !clave) {
+          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
+          return;
+        }
+
+        if (clave === "fresh") { // Puedes cambiar "fresh" por la clave correcta
+          operadorData.operador = nombre;
+          document.getElementById("operador").value = operadorData.operador;
+
+          // Ocultar el login y mostrar los formularios de registro y registros
+          document.getElementById("loginCard").classList.add("hidden");
+          document.getElementById("formCard").classList.remove("hidden");
+          document.getElementById("registrosCard").classList.remove("hidden");
+          document.getElementById("salida").focus();
+
+          cargarRegistros();  // Cargar los registros del día
+        } else {
+          document.getElementById("msgLogin").innerText = "Clave incorrecta";
+        }
+      }
+
+      // Función para cargar los registros desde Google Sheets
       function cargarRegistros() {
         fetch(SCRIPT_URL)
           .then(res => res.json())
@@ -223,6 +251,21 @@
           .catch(err => console.error("Error cargando registros:", err));
       }
 
+      // Función para filtrar los registros por la fecha de hoy
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split("T")[0];  // Formato yyyy-mm-dd
+
+        return registros.filter(row => {
+          const fechaRegistro = row[0];  // La fecha del registro (formato dd/MM/yyyy)
+          const [day, month, year] = fechaRegistro.split("/");  // Separamos la fecha por '/'
+          const fechaFormatoCorrecto = `${year}-${month}-${day}`;  // Convertimos a formato yyyy-MM-dd
+
+          return fechaFormatoCorrecto === fechaHoy;  // Comparamos solo las fechas sin la hora
+        });
+      }
+
+      // Función para actualizar el gráfico con los registros filtrados
       function actualizarGrafico(registros) {
         const calibres = [];
         const pesos = {};
@@ -295,19 +338,6 @@
               }
             }
           }
-        });
-      }
-
-      function filtrarRegistrosPorDia(registros) {
-        const hoy = new Date();
-        const fechaHoy = hoy.toISOString().split("T")[0];  // Formato yyyy-mm-dd
-
-        return registros.filter(row => {
-          const fechaRegistro = row[0];  // La fecha del registro (formato dd/MM/yyyy)
-          const [day, month, year] = fechaRegistro.split("/");  // Separamos la fecha por '/'
-          const fechaFormatoCorrecto = `${year}-${month}-${day}`;  // Convertimos a formato yyyy-MM-dd
-
-          return fechaFormatoCorrecto === fechaHoy;  // Comparamos solo las fechas sin la hora
         });
       }
     </script>
