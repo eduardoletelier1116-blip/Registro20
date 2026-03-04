@@ -214,6 +214,8 @@
         const hoy = new Date();
         const fechaHoy = formatDate(hoy); 
 
+        console.log("Fecha de hoy:", fechaHoy); // Depuración
+
         return registros.filter(row => formatDate(row[0]) === fechaHoy);
       }
 
@@ -235,6 +237,8 @@
 
           // Obtener registros del calibre seleccionado
           const registros = historialPesos[calibreSeleccionado] || [];
+
+          console.log("Registros para el calibre:", calibreSeleccionado, registros); // Depuración
 
           // Si no hay registros para este calibre, no dibujar el gráfico
           if (registros.length === 0) {
