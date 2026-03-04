@@ -286,8 +286,11 @@
         const fechaHoy = hoy.toISOString().split("T")[0];  // Formato yyyy-mm-dd
 
         return registros.filter(row => {
-          const fechaRegistro = row[0];  // La fecha del registro
-          return fechaRegistro === fechaHoy;
+          const fechaRegistro = row[0];  // La fecha del registro (formato dd/MM/yyyy)
+          const [day, month, year] = fechaRegistro.split("/");  // Separamos la fecha por '/'
+          const fechaFormatoCorrecto = `${year}-${month}-${day}`;  // Convertimos a formato yyyy-MM-dd
+
+          return fechaFormatoCorrecto === fechaHoy;  // Comparamos solo las fechas sin la hora
         });
       }
     </script>
