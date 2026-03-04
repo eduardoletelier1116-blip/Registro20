@@ -109,6 +109,7 @@
     </header>
 
     <div class="container">
+      <!-- Formulario de Login -->
       <div class="card" id="loginCard">
         <h3>Ingreso</h3>
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
@@ -117,6 +118,7 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
+      <!-- Formulario de Registro de Pesos (escondido inicialmente) -->
       <div class="card hidden" id="formCard">
         <h3>Nuevo Registro</h3>
         <form id="form">
@@ -155,6 +157,7 @@
         </form>
       </div>
 
+      <!-- Tabla de Registros -->
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <table>
@@ -176,6 +179,7 @@
         </table>
       </div>
 
+      <!-- Gráfico de Progreso de Peso por Calibre -->
       <div class="card">
         <h3>Progreso de Peso por Calibre</h3>
         <canvas id="pesoChart" width="800" height="400"></canvas>
