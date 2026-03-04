@@ -257,7 +257,10 @@
           pesos[calibre].push(peso);
         });
 
-        // Asignar un color a cada calibre
+        // Ordenar los calibres de menor a mayor
+        calibres.sort((a, b) => a - b);
+
+        // Asignar un color a cada calibre y preparar los datasets
         const datasets = calibres.map((calibre, index) => ({
           label: calibre,
           data: pesos[calibre],  // Los pesos por calibre
