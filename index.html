@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Registro de Pesos por Calibre</title>
+    <title>Registro de Pesos</title>
     <style>
       body {
         font-family: Segoe UI;
@@ -97,21 +97,14 @@
       .hidden {
         display: none;
       }
-
-      /* Estilos del gráfico */
-      #chart_div {
-        width: 100%;
-        height: 400px;
-      }
     </style>
-
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body>
     <header>
       <img src="https://raw.githubusercontent.com/eduardoletelier1116-blip/app-pesaje-manzana/main/fondo-blanco.jpg" class="logo" alt="Fresh-Pak">
-      Registro de Pesos por Calibre
+      Registro de Pesos
       <div class="codigo-empresa">R02 POE 29</div>
     </header>
 
@@ -184,155 +177,16 @@
       </div>
 
       <div class="card">
-        <h3>Gráfico de Evolución del Peso por Calibre</h3>
-        <div id="chart_div"></div>
+        <h3>Progreso de Peso por Calibre</h3>
+        <canvas id="pesoChart" width="800" height="400"></canvas>
       </div>
     </div>
 
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
-      const salidaSelect = document.getElementById("salida");
-
-      for (let i = 1; i <= 41; i++) {
-        let option = document.createElement("option");
-        option.value = i;
-        option.text = i;
-        salidaSelect.appendChild(option);
-      }
-
-      let operadorData = {
-        operador: "",
-        exportadora: "",
-        variedad: "",
-        lote: ""
-      };
-
-      let historialPesos = {};  // Para almacenar los pesos por calibre y día
-
-      // Función para obtener los registros del día
-      function filtrarRegistrosPorDia(registros) {
-        const hoy = new Date();
-        const fechaHoy = formatDate(hoy); 
-
-        console.log("Fecha de hoy:", fechaHoy); // Depuración
-
-        return registros.filter(row => formatDate(row[0]) === fechaHoy);
-      }
-
-      // Convertir la fecha a formato yyyy-MM-dd
-      function formatDate(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
-      }
-
-      // Dibujar gráfico para el calibre seleccionado
-      function dibujarGrafico(calibreSeleccionado) {
-        google.charts.load('current', {'packages':['corechart', 'line']});
-        google.charts.setOnLoadCallback(function() {
-          var data = new google.visualization.DataTable();
-          data.addColumn('number', 'Registro');
-          data.addColumn('number', 'Peso (kg)');
-
-          // Obtener registros del calibre seleccionado
-          const registros = historialPesos[calibreSeleccionado] || [];
-
-          console.log("Registros para el calibre:", calibreSeleccionado, registros); // Depuración
-
-          // Si no hay registros para este calibre, no dibujar el gráfico
-          if (registros.length === 0) {
-            document.getElementById('chart_div').innerHTML = 'No hay registros para este calibre hoy.';
-            return;
-          }
-
-          // Añadir los registros al gráfico
-          registros.forEach((registro, index) => {
-            data.addRow([index + 1, registro.peso]); // El índice + 1 será el "registro"
-          });
-
-          var options = {
-            title: `Evolución del Peso para el Calibre ${calibreSeleccionado}`,
-            hAxis: {
-              title: 'Número de Registro',
-            },
-            vAxis: {
-              title: 'Peso (kg)',
-            },
-            chartArea: { width: '80%', height: '70%' },
-            series: {
-              0: { pointShape: 'circle', pointSize: 6 }
-            }
-          };
-
-          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-          chart.draw(data, options);
-        });
-      }
 
       window.addEventListener("load", function () {
         cargarRegistros();
-      });
-
-      function ingresarOperador() {
-        const nombre = document.getElementById("nombreOperador").value.trim();
-        const clave = document.getElementById("claveOperador").value.trim();
-
-        if (!nombre || !clave) {
-          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
-          return;
-        }
-
-        if (clave === "fresh") {
-          operadorData.operador = nombre;
-          document.getElementById("operador").value = operadorData.operador;
-
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("registrosCard").classList.remove("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
-          document.getElementById("app").classList.remove("hidden");
-          document.getElementById("salida").focus();
-
-          cargarRegistros();
-        } else {
-          document.getElementById("msgLogin").innerText = "Clave incorrecta";
-        }
-      }
-
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const data = {
-          operador: operadorData.operador,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
-
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
-            document.getElementById("msg").innerText = "Guardado correctamente";
-
-            // Actualizar historial de pesos por calibre
-            if (!historialPesos[data.calibre]) {
-              historialPesos[data.calibre] = [];
-            }
-            historialPesos[data.calibre].push({
-              peso: data.peso
-            });
-
-            // Actualizar el gráfico para el calibre ingresado
-            dibujarGrafico(data.calibre);
-          })
-          .catch(err => console.error("Error guardando:", err));
       });
 
       function cargarRegistros() {
@@ -363,13 +217,78 @@
                   </tr>
                 `;
               });
-
-              // Llamamos a la función para dibujar el gráfico para cada calibre
-              const calibresRegistrados = [...new Set(registrosFiltrados.map(row => row[5]))];
-              calibresRegistrados.forEach(calibre => dibujarGrafico(calibre));
+              actualizarGrafico(registrosFiltrados);  // Actualizamos el gráfico con los datos filtrados
             }
           })
           .catch(err => console.error("Error cargando registros:", err));
+      }
+
+      function actualizarGrafico(registros) {
+        const calibres = [];
+        const pesos = {};
+        const fechas = [];
+
+        registros.forEach(row => {
+          const calibre = row[5];
+          const peso = parseFloat(row[9]);
+          const fecha = row[0];
+
+          if (!calibres.includes(calibre)) {
+            calibres.push(calibre);
+          }
+
+          if (!pesos[calibre]) {
+            pesos[calibre] = [];
+            fechas.push(fecha);
+          }
+
+          pesos[calibre].push(peso);
+        });
+
+        const datasets = calibres.map(calibre => ({
+          label: calibre,
+          data: pesos[calibre],
+          borderColor: 'rgba(75, 192, 192, 1)',
+          fill: false,
+          tension: 0.1
+        }));
+
+        const ctx = document.getElementById('pesoChart').getContext('2d');
+        const pesoChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: fechas,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Fecha'
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Peso (kg)'
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split("T")[0];
+
+        return registros.filter(row => {
+          const fechaRegistro = row[0];
+          return fechaRegistro === fechaHoy;
+        });
       }
     </script>
   </body>
