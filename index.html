@@ -228,6 +228,18 @@
         const pesos = {};
         const fechas = [];
 
+        // Definir un conjunto de colores para los calibres
+        const colores = [
+          'rgba(75, 192, 192, 1)',  // Color para el primer calibre
+          'rgba(153, 102, 255, 1)',  // Segundo color
+          'rgba(255, 159, 64, 1)',  // Tercer color
+          'rgba(54, 162, 235, 1)',  // Cuarto color
+          'rgba(255, 99, 132, 1)',  // Quinto color
+          'rgba(255, 205, 86, 1)',  // Sexto color
+          'rgba(231, 76, 60, 1)',  // Séptimo color
+          'rgba(46, 204, 113, 1)', // Octavo color
+        ];
+
         registros.forEach(row => {
           const calibre = row[5];  // Calibre
           const peso = parseFloat(row[9]);  // Peso
@@ -245,14 +257,16 @@
           pesos[calibre].push(peso);
         });
 
-        const datasets = calibres.map(calibre => ({
+        // Asignar un color a cada calibre
+        const datasets = calibres.map((calibre, index) => ({
           label: calibre,
           data: pesos[calibre],  // Los pesos por calibre
-          borderColor: 'rgba(75, 192, 192, 1)',  // Color de la línea
+          borderColor: colores[index % colores.length],  // Asignar color
           fill: false,  // No rellenar el área bajo la línea
           tension: 0.1   // Para suavizar la línea
         }));
 
+        // Crear el gráfico de líneas
         const ctx = document.getElementById('pesoChart').getContext('2d');
         const pesoChart = new Chart(ctx, {
           type: 'line',
