@@ -97,6 +97,12 @@
       .hidden {
         display: none;
       }
+
+      .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
@@ -157,6 +163,7 @@
         </form>
       </div>
 
+      <!-- Tabla de Registros -->
       <div class="card" id="registrosCard">
         <h3>Registros</h3>
         <table>
@@ -181,7 +188,9 @@
       <!-- Gráfico de Progreso de Peso por Calibre -->
       <div class="card">
         <h3>Progreso de Peso por Calibre</h3>
-        <canvas id="pesoChart" width="800" height="400"></canvas>
+        <div class="chart-container">
+          <canvas id="pesoChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -206,11 +215,10 @@
           operadorData.operador = nombre;
           document.getElementById("operador").value = operadorData.operador;
 
-          // Ocultar el login y mostrar el formulario de registro y tabla de registros
+          // Ocultar el login y mostrar el formulario de registro, la tabla y el gráfico
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("formCard").classList.remove("hidden");
           document.getElementById("registrosCard").classList.remove("hidden");
-          document.getElementById("salida").focus();
 
           cargarRegistros();  // Cargar los registros del día
         } else {
