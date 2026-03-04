@@ -177,81 +177,22 @@
           <tbody id="tabla"></tbody>
         </table>
       </div>
+
+      <!-- Gráfico de Progreso de Peso por Calibre -->
+      <div class="card">
+        <h3>Progreso de Peso por Calibre</h3>
+        <canvas id="pesoChart" width="800" height="400"></canvas>
+      </div>
     </div>
 
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
-      const salidaSelect = document.getElementById("salida");
-
-      for (let i = 1; i <= 41; i++) {
-        let option = document.createElement("option");
-        option.value = i;
-        option.text = i;
-        salidaSelect.appendChild(option);
-      }
-
-      let nombreActual = "";
-      let operadorData = {
-        operador: "",
-        exportadora: "",
-        variedad: "",
-        lote: ""
-      };
-
-      // Función de formateo de fecha
-      function formatDate(date) {
-        // Verificamos si 'date' es un objeto Date
-        if (date instanceof Date) {
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${year}-${month}-${day}`;
-        }
-
-        // Si la fecha es un string en formato 'DD/MM/YYYY'
-        if (typeof date === 'string' && date.includes('/')) {
-          const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
-          const day = String(parts[0]).padStart(2, '0');
-          const month = String(parts[1]).padStart(2, '0');
-          const year = parts[2];
-          return `${year}-${month}-${day}`;
-        }
-
-        // Si no es un formato esperado, retornamos la fecha original
-        return date;
-      }
-
-      // Filtra registros solo para el día actual
-      function filtrarRegistrosPorDia(registros) {
-        const hoy = new Date();
-        const fechaHoy = formatDate(hoy); 
-
-        console.log("Fecha de hoy:", fechaHoy);
-        console.log("Registros recibidos:", registros);
-
-        registros.forEach((row, index) => {
-          console.log(`Registro ${index} - Fecha: ${row[0]}`);
-        });
-
-        return registros.filter(row => {
-          const fechaRegistro = formatDate(row[0]); 
-          console.log(`Comparando fecha del registro ${row[0]} con la fecha de hoy ${fechaHoy}`);
-          return fechaRegistro === fechaHoy;
-        });
-      }
 
       window.addEventListener("load", function () {
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
-
         cargarRegistros();
       });
 
+      // Función para ingresar al sistema (login)
       function ingresarOperador() {
         const nombre = document.getElementById("nombreOperador").value.trim();
         const clave = document.getElementById("claveOperador").value.trim();
@@ -261,60 +202,23 @@
           return;
         }
 
-        if (clave === "fresh") {
+        if (clave === "fresh") { // Cambiar la clave según corresponda
           operadorData.operador = nombre;
           document.getElementById("operador").value = operadorData.operador;
 
-          // Mostrar el formulario y ocultar el login después de ingreso correcto
+          // Ocultar el login y mostrar el formulario de registro y tabla de registros
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("formCard").classList.remove("hidden");
           document.getElementById("registrosCard").classList.remove("hidden");
+          document.getElementById("salida").focus();
 
-          cargarRegistros();
+          cargarRegistros();  // Cargar los registros del día
         } else {
           document.getElementById("msgLogin").innerText = "Clave incorrecta";
         }
       }
 
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const data = {
-          operador: operadorData.operador,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
-
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
-            document.getElementById("msg").innerText = "Guardado correctamente";
-
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
-
-            document.getElementById("calibre").value = "";
-            document.getElementById("peso").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("salida").value = "";
-            document.getElementById("operador").value = operadorData.operador;
-
-            document.getElementById("salida").focus();
-
-            setTimeout(cargarRegistros, 400);
-          })
-          .catch(err => console.error("Error guardando:", err));
-      });
-
+      // Función para cargar los registros desde Google Sheets
       function cargarRegistros() {
         fetch(SCRIPT_URL)
           .then(res => res.json())
@@ -324,30 +228,119 @@
 
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            console.log("Registros filtrados para hoy:", registrosFiltrados);
-
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
             } else {
               registrosFiltrados.reverse().forEach(row => {
                 tbody.innerHTML += `
                   <tr>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td>${row[7]}</td>
-                    <td>${row[8]}</td>
-                    <td>${row[9]}</td>
+                    <td>${row[0]}</td>  <!-- Fecha -->
+                    <td>${row[1]}</td>  <!-- Hora -->
+                    <td>${row[2]}</td>  <!-- Operador -->
+                    <td>${row[3]}</td>  <!-- Exportadora -->
+                    <td>${row[4]}</td>  <!-- Salida -->
+                    <td>${row[5]}</td>  <!-- Calibre -->
+                    <td>${row[6]}</td>  <!-- Categoría -->
+                    <td>${row[7]}</td>  <!-- Variedad -->
+                    <td>${row[8]}</td>  <!-- Lote -->
+                    <td>${row[9]}</td>  <!-- Peso -->
                   </tr>
                 `;
               });
+              actualizarGrafico(registrosFiltrados);  // Actualizamos el gráfico con los datos filtrados
             }
           })
           .catch(err => console.error("Error cargando registros:", err));
+      }
+
+      // Función para filtrar los registros por la fecha de hoy
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split("T")[0];  // Formato yyyy-mm-dd
+
+        return registros.filter(row => {
+          const fechaRegistro = row[0];  // La fecha del registro (formato dd/MM/yyyy)
+          const [day, month, year] = fechaRegistro.split("/");  // Separamos la fecha por '/'
+          const fechaFormatoCorrecto = `${year}-${month}-${day}`;  // Convertimos a formato yyyy-MM-dd
+
+          return fechaFormatoCorrecto === fechaHoy;  // Comparamos solo las fechas sin la hora
+        });
+      }
+
+      // Función para actualizar el gráfico con los registros filtrados
+      function actualizarGrafico(registros) {
+        const calibres = [];
+        const pesos = {};
+        const fechas = [];
+
+        // Definir un conjunto de colores para los calibres
+        const colores = [
+          'rgba(75, 192, 192, 1)',  // Color para el primer calibre
+          'rgba(153, 102, 255, 1)',  // Segundo color
+          'rgba(255, 159, 64, 1)',  // Tercer color
+          'rgba(54, 162, 235, 1)',  // Cuarto color
+          'rgba(255, 99, 132, 1)',  // Quinto color
+          'rgba(255, 205, 86, 1)',  // Sexto color
+          'rgba(231, 76, 60, 1)',  // Séptimo color
+          'rgba(46, 204, 113, 1)', // Octavo color
+        ];
+
+        registros.forEach(row => {
+          const calibre = row[5];  // Calibre
+          const peso = parseFloat(row[9]);  // Peso
+          const fecha = row[0];  // Fecha
+
+          if (!calibres.includes(calibre)) {
+            calibres.push(calibre);
+          }
+
+          if (!pesos[calibre]) {
+            pesos[calibre] = [];
+            fechas.push(fecha);
+          }
+
+          pesos[calibre].push(peso);
+        });
+
+        // Ordenar los calibres de menor a mayor
+        calibres.sort((a, b) => a - b);
+
+        // Asignar un color a cada calibre y preparar los datasets
+        const datasets = calibres.map((calibre, index) => ({
+          label: calibre,
+          data: pesos[calibre],  // Los pesos por calibre
+          borderColor: colores[index % colores.length],  // Asignar color
+          fill: false,  // No rellenar el área bajo la línea
+          tension: 0.1   // Para suavizar la línea
+        }));
+
+        // Crear el gráfico de líneas
+        const ctx = document.getElementById('pesoChart').getContext('2d');
+        const pesoChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: fechas,  // Fechas
+            datasets: datasets  // Datos de cada calibre
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Fecha'
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Peso (kg)'
+                }
+              }
+            }
+          }
+        });
       }
     </script>
   </body>
