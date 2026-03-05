@@ -97,12 +97,6 @@
       .hidden {
         display: none;
       }
-
-      .chart-container {
-        position: relative;
-        height: 400px;
-        width: 100%;
-      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
@@ -115,7 +109,6 @@
     </header>
 
     <div class="container">
-      <!-- Formulario de Login -->
       <div class="card" id="loginCard">
         <h3>Ingreso</h3>
         <input type="text" id="nombreOperador" placeholder="Nombre operador">
@@ -124,7 +117,6 @@
         <p id="msgLogin" style="color:red;"></p>
       </div>
 
-      <!-- Formulario de Registro de Pesos (escondido inicialmente) -->
       <div class="card hidden" id="formCard">
         <h3>Nuevo Registro</h3>
         <form id="form">
@@ -184,12 +176,9 @@
         </table>
       </div>
 
-      <!-- Gráfico de Progreso de Peso por Calibre -->
-      <div class="card">
+      <div class="card" id="graficoCard">
         <h3>Progreso de Peso por Calibre</h3>
-        <div class="chart-container">
-          <canvas id="pesoChart"></canvas>
-        </div>
+        <canvas id="graficoCalibres"></canvas>
       </div>
     </div>
 
@@ -204,6 +193,7 @@
         salidaSelect.appendChild(option);
       }
 
+      let nombreActual = "";
       let operadorData = {
         operador: "",
         exportadora: "",
@@ -227,84 +217,18 @@
           const year = parts[2];
           return `${year}-${month}-${day}`;
         }
-
         return date;
       }
 
-      // Filtra registros solo para el día actual
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
         const fechaHoy = formatDate(hoy); 
 
         return registros.filter(row => {
-          const fechaRegistro = formatDate(row[0]);
+          const fechaRegistro = formatDate(row[0]); 
           return fechaRegistro === fechaHoy;
         });
       }
-
-      window.addEventListener("load", function () {
-        cargarRegistros();
-      });
-
-      function ingresarOperador() {
-        const nombre = document.getElementById("nombreOperador").value.trim();
-        const clave = document.getElementById("claveOperador").value.trim();
-
-        if (!nombre || !clave) {
-          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
-          return;
-        }
-
-        if (clave === "fresh") {
-          operadorData.operador = nombre;
-          document.getElementById("operador").value = operadorData.operador;
-
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("registrosCard").classList.remove("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
-
-          cargarRegistros();
-        } else {
-          document.getElementById("msgLogin").innerText = "Clave incorrecta";
-        }
-      }
-
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const data = {
-          operador: operadorData.operador,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
-
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
-            document.getElementById("msg").innerText = "Guardado correctamente";
-
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
-
-            document.getElementById("calibre").value = "";
-            document.getElementById("peso").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("salida").value = "";
-            document.getElementById("operador").value = operadorData.operador;
-
-            setTimeout(cargarRegistros, 400);
-          })
-          .catch(err => console.error("Error guardando:", err));
-      });
 
       function cargarRegistros() {
         fetch(SCRIPT_URL)
@@ -334,82 +258,74 @@
                   </tr>
                 `;
               });
-              actualizarGrafico(registrosFiltrados);  // Actualizamos el gráfico con los datos filtrados
             }
+
+            const calibres = {};
+            registrosFiltrados.forEach(row => {
+              const calibre = row[5];
+              const peso = parseFloat(row[9]);
+              const fecha = formatDate(row[0]);
+              
+              if (!calibres[calibre]) {
+                calibres[calibre] = {
+                  label: calibre,
+                  data: [],
+                  borderColor: getRandomColor(),
+                  backgroundColor: "rgba(0,0,0,0)",
+                  fill: false,
+                };
+              }
+              calibres[calibre].data.push({ x: fecha, y: peso });
+            });
+
+            const chartData = {
+              datasets: Object.values(calibres),
+            };
+
+            new Chart(document.getElementById("graficoCalibres"), {
+              type: "line",
+              data: chartData,
+              options: {
+                scales: {
+                  x: {
+                    type: "time",
+                    time: {
+                      unit: "day",
+                      tooltipFormat: "ll",
+                    },
+                    title: {
+                      display: true,
+                      text: "Fecha",
+                    },
+                  },
+                  y: {
+                    ticks: {
+                      beginAtZero: false,
+                    },
+                    title: {
+                      display: true,
+                      text: "Peso (kg)",
+                    },
+                  },
+                },
+                plugins: {
+                  legend: {
+                    position: "top",
+                  },
+                },
+              },
+            });
           })
           .catch(err => console.error("Error cargando registros:", err));
       }
 
-      // Función para actualizar el gráfico con los registros filtrados
-      function actualizarGrafico(registros) {
-        const calibres = [];
-        const pesos = {};
-        const fechas = [];
-
-        const colores = [
-          'rgba(75, 192, 192, 1)',  
-          'rgba(153, 102, 255, 1)',  
-          'rgba(255, 159, 64, 1)',  
-          'rgba(54, 162, 235, 1)',  
-          'rgba(255, 99, 132, 1)',  
-          'rgba(255, 205, 86, 1)',  
-          'rgba(231, 76, 60, 1)',  
-          'rgba(46, 204, 113, 1)', 
-        ];
-
-        registros.forEach(row => {
-          const calibre = row[5];  
-          const peso = parseFloat(row[9]);  
-          const fecha = row[0];  
-
-          if (!calibres.includes(calibre)) {
-            calibres.push(calibre);
-          }
-
-          if (!pesos[calibre]) {
-            pesos[calibre] = [];
-            fechas.push(fecha);
-          }
-
-          pesos[calibre].push(peso);
-        });
-
-        calibres.sort((a, b) => a - b);
-
-        const datasets = calibres.map((calibre, index) => ({
-          label: calibre,
-          data: pesos[calibre],  
-          borderColor: colores[index % colores.length],  
-          fill: false,  
-          tension: 0.1   
-        }));
-
-        const ctx = document.getElementById('pesoChart').getContext('2d');
-        const pesoChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: fechas,  
-            datasets: datasets  
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Fecha'
-                }
-              },
-              y: {
-                title: {
-                  display: true,
-                  text: 'Peso (kg)'
-                }
-              }
-            }
-          }
-        });
+      function getRandomColor() {
+        const letters = "0123456789ABCDEF";
+        let color = "#";
+        for (let i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
       }
     </script>
   </body>
