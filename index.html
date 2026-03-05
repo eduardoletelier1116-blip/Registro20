@@ -153,7 +153,7 @@
             <option>Pink Lady</option>
           </select>
           <select id="salida" required>
-            <option value="">Salida</option>
+            <!-- Opciones de salida generadas dinámicamente -->
           </select>
           <input type="text" id="calibre" placeholder="Calibre" required>
           <input type="text" id="lote" placeholder="Lote">
@@ -196,17 +196,23 @@
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
 
-      // Variables globales
-      let operadorData = {
-        operador: "",
-        exportadora: "",
-        variedad: "",
-        lote: ""
-      };
-
       window.addEventListener("load", function () {
         cargarRegistros();
+        // Cargar opciones de "Salida" de 1 a 41 al cargar la página
+        cargarOpcionesSalida();
       });
+
+      // Función para cargar las opciones de salida (1 a 41)
+      function cargarOpcionesSalida() {
+        const salidaSelect = document.getElementById("salida");
+
+        for (let i = 1; i <= 41; i++) {
+          let option = document.createElement("option");
+          option.value = i;
+          option.text = i;
+          salidaSelect.appendChild(option);
+        }
+      }
 
       // Función para ingresar al sistema (login)
       function ingresarOperador() {
