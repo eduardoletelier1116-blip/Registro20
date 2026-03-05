@@ -372,5 +372,126 @@
         });
       }
     </script>
+    <!-- Incluir este bloque en tu código donde quieras mostrar el gráfico -->
+<div class="card">
+  <h3>Progreso de Peso por Calibre</h3>
+  <div class="chart-container">
+    <canvas id="pesoChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Esta función actualiza el gráfico con los datos del registro
+  function actualizarGrafico(registros) {
+    const calibres = [];
+    const pesos = {};
+    const fechas = [];
+
+    // Colores para los calibres
+    const colores = [
+      'rgba(75, 192, 192, 1)',  // Color para el primer calibre
+      'rgba(153, 102, 255, 1)',  // Segundo color
+      'rgba(255, 159, 64, 1)',  // Tercer color
+      'rgba(54, 162, 235, 1)',  // Cuarto color
+      'rgba(255, 99, 132, 1)',  // Quinto color
+      'rgba(255, 205, 86, 1)',  // Sexto color
+      'rgba(231, 76, 60, 1)',  // Séptimo color
+      'rgba(46, 204, 113, 1)', // Octavo color
+    ];
+
+    registros.forEach(row => {
+      const calibre = row[5];  // Calibre
+      const peso = parseFloat(row[9]);  // Peso
+      const fecha = row[0];  // Fecha
+
+      if (!calibres.includes(calibre)) {
+        calibres.push(calibre);
+      }
+
+      if (!pesos[calibre]) {
+        pesos[calibre] = [];
+        fechas.push(fecha);
+      }
+
+      pesos[calibre].push(peso);
+    });
+
+    // Ordenar los calibres de menor a mayor
+    calibres.sort((a, b) => a - b);
+
+    // Preparar los datasets para el gráfico
+    const datasets = calibres.map((calibre, index) => ({
+      label: calibre,
+      data: pesos[calibre],  // Los pesos por calibre
+      borderColor: colores[index % colores.length],  // Asignar color
+      fill: false,  // No rellenar el área bajo la línea
+      tension: 0.1   // Para suavizar la línea
+    }));
+
+    // Crear el gráfico de líneas
+    const ctx = document.getElementById('pesoChart').getContext('2d');
+    const pesoChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: fechas,  // Fechas
+        datasets: datasets  // Datos de cada calibre
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Fecha'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Peso (kg)'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Función para cargar los registros y actualizar el gráfico
+  function cargarRegistros() {
+    fetch('https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec')
+      .then(res => res.json())
+      .then(data => {
+        const registrosFiltrados = filtrarRegistrosPorDia(data);
+
+        if (registrosFiltrados.length === 0) {
+          alert("No hay registros para hoy");
+        } else {
+          actualizarGrafico(registrosFiltrados);  // Actualizamos el gráfico con los datos filtrados
+        }
+      })
+      .catch(err => console.error("Error cargando registros:", err));
+  }
+
+  // Función para filtrar los registros por la fecha de hoy
+  function filtrarRegistrosPorDia(registros) {
+    const hoy = new Date();
+    const fechaHoy = hoy.toISOString().split("T")[0];  // Formato yyyy-mm-dd
+
+    return registros.filter(row => {
+      const fechaRegistro = row[0];  // La fecha del registro (formato dd/MM/yyyy)
+      const [day, month, year] = fechaRegistro.split("/");  // Separamos la fecha por '/'
+      const fechaFormatoCorrecto = `${year}-${month}-${day}`;  // Convertimos a formato yyyy-MM-dd
+
+      return fechaFormatoCorrecto === fechaHoy;  // Comparamos solo las fechas sin la hora
+    });
+  }
+
+  // Cargar los registros y actualizar el gráfico cuando la página se carga
+  window.addEventListener("load", function () {
+    cargarRegistros();
+  });
+</script>
   </body>
 </html>
