@@ -344,6 +344,8 @@
 
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
+            console.log("Registros filtrados para hoy:", registrosFiltrados);  // Depuración
+
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
             } else {
