@@ -238,7 +238,7 @@
           // Obtener registros del calibre seleccionado
           const registros = historialPesos[calibreSeleccionado] || [];
 
-          console.log("Registros para el calibre:", calibreSeleccionado, registros); // Depuración
+          console.log("Registros para el calibre:", calibreSeleccionado, registros);  // Depuración
 
           // Si no hay registros para este calibre, no dibujar el gráfico
           if (registros.length === 0) {
@@ -313,6 +313,8 @@
           peso: document.getElementById("peso").value
         };
 
+        console.log("Datos a enviar:", data);  // Depuración: Verificar los datos que se están enviando
+
         fetch(SCRIPT_URL, {
           method: "POST",
           body: new URLSearchParams(data)
@@ -344,7 +346,7 @@
 
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            console.log("Registros filtrados para hoy:", registrosFiltrados);  // Depuración
+            console.log("Registros filtrados para hoy:", registrosFiltrados);  // Depuración: Verificar los registros
 
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
