@@ -258,6 +258,7 @@
 
           console.log("Registros para el calibre:", calibreSeleccionado, registros);  // Depuración
 
+          // Si no hay registros para este calibre, no dibujar el gráfico
           if (registros.length === 0) {
             console.log(`No hay registros para el calibre ${calibreSeleccionado}`);
             return;  // No dibujar el gráfico si no hay registros
@@ -265,7 +266,7 @@
 
           // Añadir los registros al gráfico
           registros.forEach((registro, index) => {
-            if (registro.peso) {
+            if (registro.peso && !isNaN(registro.peso)) {
               data.addRow([index + 1, parseFloat(registro.peso)]); // Convertimos el peso a float para asegurar que se maneje como número
             }
           });
@@ -331,6 +332,12 @@
           lote: document.getElementById("lote").value,
           peso: document.getElementById("peso").value
         };
+
+        // Validar que el peso no esté vacío y sea un número válido
+        if (!data.peso || isNaN(data.peso)) {
+          alert("Por favor ingrese un peso válido.");
+          return;
+        }
 
         console.log("Datos a enviar:", data);  // Depuración
 
