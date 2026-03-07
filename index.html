@@ -259,13 +259,15 @@
           console.log("Registros para el calibre:", calibreSeleccionado, registros);  // Depuración
 
           if (registros.length === 0) {
-            document.getElementById('chart_div').innerHTML = 'No hay registros para este calibre hoy.';
-            return;
+            console.log(`No hay registros para el calibre ${calibreSeleccionado}`);
+            return;  // No dibujar el gráfico si no hay registros
           }
 
           // Añadir los registros al gráfico
           registros.forEach((registro, index) => {
-            data.addRow([index + 1, registro.peso]); // El índice + 1 será el "registro"
+            if (registro.peso) {
+              data.addRow([index + 1, parseFloat(registro.peso)]); // Convertimos el peso a float para asegurar que se maneje como número
+            }
           });
 
           var options = {
