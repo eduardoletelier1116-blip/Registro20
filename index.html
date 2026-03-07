@@ -190,7 +190,7 @@
     </div>
 
     <script>
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-mSmXg9eDsZ0qg4rXbbGjL825q3XMpOru0swpVuEHhMQlCWlznj1y7dIoiOy8z1Yq/exec";
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
 
       for (let i = 1; i <= 41; i++) {
@@ -212,19 +212,37 @@
       // Función para obtener los registros del día
       function filtrarRegistrosPorDia(registros) {
         const hoy = new Date();
-        const fechaHoy = formatDate(hoy); 
+        const fechaHoy = formatDate(hoy); // Obtener la fecha de hoy en formato yyyy-MM-dd
 
-        console.log("Fecha de hoy:", fechaHoy); // Depuración
+        console.log("Fecha de hoy:", fechaHoy);  // Depuración
 
+        // Imprimir todos los registros para verificar las fechas
+        registros.forEach(row => {
+          console.log("Registro:", row[0], " - Fecha formateada:", formatDate(row[0])); // Verificar cada fecha
+        });
+
+        // Filtrar los registros que coinciden con la fecha de hoy
         return registros.filter(row => formatDate(row[0]) === fechaHoy);
       }
 
       // Convertir la fecha a formato yyyy-MM-dd
       function formatDate(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${year}-${month}-${day}`;
+        if (date instanceof Date) {
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${year}-${month}-${day}`;
+        }
+
+        if (typeof date === 'string' && date.includes('/')) {
+          const parts = date.split('/');
+          const day = String(parts[0]).padStart(2, '0');
+          const month = String(parts[1]).padStart(2, '0');
+          const year = parts[2];
+          return `${year}-${month}-${day}`;
+        }
+
+        return date;
       }
 
       // Dibujar gráfico para el calibre seleccionado
@@ -240,7 +258,6 @@
 
           console.log("Registros para el calibre:", calibreSeleccionado, registros);  // Depuración
 
-          // Si no hay registros para este calibre, no dibujar el gráfico
           if (registros.length === 0) {
             document.getElementById('chart_div').innerHTML = 'No hay registros para este calibre hoy.';
             return;
@@ -313,7 +330,7 @@
           peso: document.getElementById("peso").value
         };
 
-        console.log("Datos a enviar:", data);  // Depuración: Verificar los datos que se están enviando
+        console.log("Datos a enviar:", data);  // Depuración
 
         fetch(SCRIPT_URL, {
           method: "POST",
@@ -346,7 +363,7 @@
 
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            console.log("Registros filtrados para hoy:", registrosFiltrados);  // Depuración: Verificar los registros
+            console.log("Registros filtrados para hoy:", registrosFiltrados);  // Depuración
 
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
