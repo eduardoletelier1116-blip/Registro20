@@ -407,27 +407,14 @@
         return colores[index % colores.length];
       }
 
-      function guardarObjetivosEnLocalStorage() {
-        localStorage.setItem("reglasObjetivoTurno", JSON.stringify(reglasObjetivo));
-      }
-
-      function cargarObjetivosDesdeLocalStorage() {
-        try {
-          const guardado = localStorage.getItem("reglasObjetivoTurno");
-          const datos = guardado ? JSON.parse(guardado) : [];
-
-          reglasObjetivo = datos.map(r => ({
-            desde: parseInt(r.desde, 10),
-            hasta: parseInt(r.hasta, 10),
-            objetivo: Number(normalizarNumero(r.objetivo).toFixed(2))
-          })).filter(r =>
-            !isNaN(r.desde) &&
-            !isNaN(r.hasta) &&
-            !isNaN(r.objetivo)
-          );
-        } catch (e) {
-          reglasObjetivo = [];
-        }
+      function guardarObjetivosEnServidor() {
+        return fetch(SCRIPT_URL, {
+          method: "POST",
+          body: new URLSearchParams({
+            accion: "guardarObjetivos",
+            objetivos: JSON.stringify(reglasObjetivo)
+          })
+        }).then(res => res.json());
       }
 
       function actualizarEstadoObjetivos() {
@@ -502,9 +489,15 @@
 
         reglasObjetivo.sort((a, b) => a.desde - b.desde);
 
-        guardarObjetivosEnLocalStorage();
-        renderTablaObjetivos();
-        cargarRegistros();
+        guardarObjetivosEnServidor()
+          .then(() => {
+            renderTablaObjetivos();
+            cargarRegistros();
+          })
+          .catch(err => {
+            console.error("Error guardando objetivos:", err);
+            alert("No se pudieron guardar los objetivos.");
+          });
 
         document.getElementById("calibreDesde").value = "";
         document.getElementById("calibreHasta").value = "";
@@ -514,16 +507,30 @@
 
       function eliminarRegla(index) {
         reglasObjetivo.splice(index, 1);
-        guardarObjetivosEnLocalStorage();
-        renderTablaObjetivos();
-        cargarRegistros();
+
+        guardarObjetivosEnServidor()
+          .then(() => {
+            renderTablaObjetivos();
+            cargarRegistros();
+          })
+          .catch(err => {
+            console.error("Error eliminando objetivo:", err);
+            alert("No se pudo actualizar la lista de objetivos.");
+          });
       }
 
       function limpiarObjetivos() {
         reglasObjetivo = [];
-        guardarObjetivosEnLocalStorage();
-        renderTablaObjetivos();
-        cargarRegistros();
+
+        guardarObjetivosEnServidor()
+          .then(() => {
+            renderTablaObjetivos();
+            cargarRegistros();
+          })
+          .catch(err => {
+            console.error("Error limpiando objetivos:", err);
+            alert("No se pudieron limpiar los objetivos.");
+          });
       }
 
       function cargarObjetivosEjemplo() {
@@ -531,9 +538,16 @@
           { desde: 72, hasta: 125, objetivo: 19.1 },
           { desde: 150, hasta: 216, objetivo: 20.1 }
         ];
-        guardarObjetivosEnLocalStorage();
-        renderTablaObjetivos();
-        cargarRegistros();
+
+        guardarObjetivosEnServidor()
+          .then(() => {
+            renderTablaObjetivos();
+            cargarRegistros();
+          })
+          .catch(err => {
+            console.error("Error cargando objetivos ejemplo:", err);
+            alert("No se pudieron guardar los objetivos ejemplo.");
+          });
       }
 
       function obtenerObjetivoPorCalibre(calibre) {
@@ -712,7 +726,27 @@
         fetch(SCRIPT_URL + "?t=" + new Date().getTime())
           .then(res => res.json())
           .then(data => {
-            const registrosFiltrados = filtrarRegistrosPorDia(data);
+            if (data.error) throw new Error(data.message || "Error en servidor");
+
+            const registros = Array.isArray(data.registros) ? data.registros : [];
+            const objetivosRaw = Array.isArray(data.objetivos) ? data.objetivos : [];
+
+            reglasObjetivo = objetivosRaw
+              .slice(1)
+              .map(r => ({
+                desde: parseInt(r[0], 10),
+                hasta: parseInt(r[1], 10),
+                objetivo: Number(normalizarNumero(r[2]).toFixed(2))
+              }))
+              .filter(r =>
+                !isNaN(r.desde) &&
+                !isNaN(r.hasta) &&
+                !isNaN(r.objetivo)
+              );
+
+            renderTablaObjetivos();
+
+            const registrosFiltrados = filtrarRegistrosPorDia(registros);
             actualizarTabla(registrosFiltrados);
             actualizarGrafico(registrosFiltrados);
 
@@ -742,8 +776,6 @@
         if (variedad) document.getElementById("variedad").value = variedad;
         if (lote) document.getElementById("lote").value = lote;
 
-        cargarObjetivosDesdeLocalStorage();
-        renderTablaObjetivos();
         cargarRegistros();
         iniciarAutoRefresh();
       });
