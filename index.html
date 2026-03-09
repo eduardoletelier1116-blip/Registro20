@@ -321,7 +321,7 @@
     </div>
 
     <script>
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_Cq85wROYcvJpj4nickXu2k8lywT_0F-PI8xGKcNnulQSk8i2Km4byBUpq7iYiJD6/exec";
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
       const estadoSync = document.getElementById("estadoSync");
 
@@ -490,7 +490,10 @@
         reglasObjetivo.sort((a, b) => a.desde - b.desde);
 
         guardarObjetivosEnServidor()
-          .then(() => {
+          .then(resp => {
+            if (!resp.ok) {
+              throw new Error(resp.error || "No se pudieron guardar los objetivos.");
+            }
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -509,7 +512,10 @@
         reglasObjetivo.splice(index, 1);
 
         guardarObjetivosEnServidor()
-          .then(() => {
+          .then(resp => {
+            if (!resp.ok) {
+              throw new Error(resp.error || "No se pudo actualizar la lista.");
+            }
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -523,7 +529,10 @@
         reglasObjetivo = [];
 
         guardarObjetivosEnServidor()
-          .then(() => {
+          .then(resp => {
+            if (!resp.ok) {
+              throw new Error(resp.error || "No se pudieron limpiar los objetivos.");
+            }
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -540,7 +549,10 @@
         ];
 
         guardarObjetivosEnServidor()
-          .then(() => {
+          .then(resp => {
+            if (!resp.ok) {
+              throw new Error(resp.error || "No se pudieron guardar los objetivos ejemplo.");
+            }
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -726,7 +738,11 @@
         fetch(SCRIPT_URL + "?t=" + new Date().getTime())
           .then(res => res.json())
           .then(data => {
-            if (data.error) throw new Error(data.message || "Error en servidor");
+            console.log("Respuesta servidor:", data);
+
+            if (!data.ok) {
+              throw new Error(data.error || "Error en servidor");
+            }
 
             const registros = Array.isArray(data.registros) ? data.registros : [];
             const objetivosRaw = Array.isArray(data.objetivos) ? data.objetivos : [];
@@ -746,7 +762,12 @@
 
             renderTablaObjetivos();
 
-            const registrosFiltrados = filtrarRegistrosPorDia(registros);
+            const registrosSinEncabezado = registros.filter(row => {
+              return row && row.length >= 10 && String(row[0]).toLowerCase() !== "fecha";
+            });
+
+            const registrosFiltrados = filtrarRegistrosPorDia(registrosSinEncabezado);
+
             actualizarTabla(registrosFiltrados);
             actualizarGrafico(registrosFiltrados);
 
@@ -755,7 +776,7 @@
           })
           .catch(err => {
             console.error("Error cargando registros:", err);
-            estadoSync.innerText = "Error al sincronizar";
+            estadoSync.innerText = "Error al sincronizar: " + err.message;
           })
           .finally(() => {
             cargando = false;
@@ -825,7 +846,11 @@
           body: new URLSearchParams(data)
         })
           .then(res => res.json())
-          .then(() => {
+          .then(resp => {
+            if (!resp.ok) {
+              throw new Error(resp.error || "Error al guardar");
+            }
+
             document.getElementById("msg").innerText = "Guardado correctamente";
 
             localStorage.setItem("exportadora", data.exportadora);
