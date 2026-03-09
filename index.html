@@ -2,10 +2,11 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Registro de Pesos por Calibre</title>
+    <title>Registro de Pesos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       body {
-        font-family: Segoe UI;
+        font-family: Segoe UI, sans-serif;
         margin: 0;
         background: #f4f6f9;
       }
@@ -57,6 +58,7 @@
         margin: 5px 0;
         border-radius: 6px;
         border: 1px solid #ddd;
+        box-sizing: border-box;
       }
 
       button {
@@ -98,20 +100,18 @@
         display: none;
       }
 
-      /* Estilos del gráfico */
-      #chart_div {
+      .chart-container {
+        position: relative;
         width: 100%;
-        height: 400px;
+        height: 420px;
       }
     </style>
-
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   </head>
 
   <body>
     <header>
       <img src="https://raw.githubusercontent.com/eduardoletelier1116-blip/app-pesaje-manzana/main/fondo-blanco.jpg" class="logo" alt="Fresh-Pak">
-      Registro de Pesos por Calibre
+      Registro de Pesos
       <div class="codigo-empresa">R02 POE 29</div>
     </header>
 
@@ -128,6 +128,7 @@
         <h3>Nuevo Registro</h3>
         <form id="form">
           <input type="text" id="operador" readonly>
+
           <select id="exportadora" required>
             <option value="">Exportadora</option>
             <option>Fruclem</option>
@@ -135,6 +136,7 @@
             <option>JHB</option>
             <option>Talamaya</option>
           </select>
+
           <select id="categoria" required>
             <option value="">Categoría</option>
             <option>Premium</option>
@@ -144,6 +146,7 @@
             <option>Granel</option>
             <option>CEM</option>
           </select>
+
           <select id="variedad" required>
             <option value="">Variedad</option>
             <option>Royal Gala</option>
@@ -152,12 +155,15 @@
             <option>Fuji</option>
             <option>Pink Lady</option>
           </select>
+
           <select id="salida" required>
             <option value="">Salida</option>
           </select>
+
           <input type="text" id="calibre" placeholder="Calibre" required>
           <input type="text" id="lote" placeholder="Lote">
           <input type="number" step="0.01" id="peso" placeholder="Peso (kg)" required>
+
           <button type="submit">Guardar</button>
           <p id="msg" class="success"></p>
         </form>
@@ -174,7 +180,7 @@
               <th>Exportadora</th>
               <th>Salida</th>
               <th>Calibre</th>
-              <th>Categoria</th>
+              <th>Categoría</th>
               <th>Variedad</th>
               <th>Lote</th>
               <th>Peso</th>
@@ -184,15 +190,18 @@
         </table>
       </div>
 
-      <div class="card">
-        <h3>Gráfico de Evolución del Peso por Calibre</h3>
-        <div id="chart_div"></div>
+      <div class="card" id="graficoCard">
+        <h3>Seguimiento de pesos por calibre</h3>
+        <div class="chart-container">
+          <canvas id="graficoPesos"></canvas>
+        </div>
       </div>
     </div>
 
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
+      let grafico = null;
 
       for (let i = 1; i <= 41; i++) {
         let option = document.createElement("option");
@@ -208,90 +217,53 @@
         lote: ""
       };
 
-      let historialPesos = {};  // Para almacenar los pesos por calibre y día
-
-      // Función para obtener los registros del día
-      function filtrarRegistrosPorDia(registros) {
-        const hoy = new Date();
-        const fechaHoy = formatDate(hoy); // Obtener la fecha de hoy en formato yyyy-MM-dd
-
-        console.log("Fecha de hoy:", fechaHoy);  // Depuración
-
-        // Imprimir todos los registros para verificar las fechas
-        registros.forEach(row => {
-          console.log("Registro:", row[0], " - Fecha formateada:", formatDate(row[0])); // Verificar cada fecha
-        });
-
-        // Filtrar los registros que coinciden con la fecha de hoy
-        return registros.filter(row => formatDate(row[0]) === fechaHoy);
-      }
-
-      // Convertir la fecha a formato yyyy-MM-dd
       function formatDate(date) {
         if (date instanceof Date) {
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
-          return `${year}-${month}-${day}`;  // Formato yyyy-MM-dd
+          return `${year}-${month}-${day}`;
         }
 
         if (typeof date === 'string' && date.includes('/')) {
-          const parts = date.split('/');  // Asume que el formato es DD/MM/YYYY
-          const day = String(parts[0]).padStart(2, '0');
-          const month = String(parts[1]).padStart(2, '0');
-          const year = parts[2];
-          return `${year}-${month}-${day}`;  // Formato yyyy-MM-dd
+          const parts = date.split('/');
+          if (parts.length === 3) {
+            const day = String(parts[0]).padStart(2, '0');
+            const month = String(parts[1]).padStart(2, '0');
+            const year = parts[2];
+            return `${year}-${month}-${day}`;
+          }
         }
 
         return date;
       }
 
-      // Dibujar gráfico para el calibre seleccionado
-      function dibujarGrafico(calibreSeleccionado) {
-        google.charts.load('current', {'packages':['corechart', 'line']});
-        google.charts.setOnLoadCallback(function() {
-          var data = new google.visualization.DataTable();
-          data.addColumn('number', 'Registro');
-          data.addColumn('number', 'Peso (kg)');
+      function filtrarRegistrosPorDia(registros) {
+        const hoy = new Date();
+        const fechaHoy = formatDate(hoy);
 
-          // Obtener registros del calibre seleccionado
-          const registros = historialPesos[calibreSeleccionado] || [];
+        return registros.filter(row => {
+          if (!row || row.length < 10) return false;
 
-          console.log("Registros para el calibre:", calibreSeleccionado, registros);  // Depuración
+          const fechaOriginal = row[0];
 
-          // Si no hay registros para este calibre, no dibujar el gráfico
-          if (registros.length === 0) {
-            console.log(`No hay registros para el calibre ${calibreSeleccionado}`);
-            return;  // No dibujar el gráfico si no hay registros
-          }
+          // Evitar fila de encabezados si viene desde la hoja
+          if (String(fechaOriginal).toLowerCase() === "fecha") return false;
 
-          // Añadir los registros al gráfico
-          registros.forEach((registro, index) => {
-            if (registro.peso && !isNaN(registro.peso)) {
-              data.addRow([index + 1, parseFloat(registro.peso)]); // Convertimos el peso a float para asegurar que se maneje como número
-            }
-          });
-
-          var options = {
-            title: `Evolución del Peso para el Calibre ${calibreSeleccionado}`,
-            hAxis: {
-              title: 'Número de Registro',
-            },
-            vAxis: {
-              title: 'Peso (kg)',
-            },
-            chartArea: { width: '80%', height: '70%' },
-            series: {
-              0: { pointShape: 'circle', pointSize: 6 }
-            }
-          };
-
-          var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-          chart.draw(data, options);
+          const fechaRegistro = formatDate(fechaOriginal);
+          return fechaRegistro === fechaHoy;
         });
       }
 
       window.addEventListener("load", function () {
+        const exportadora = localStorage.getItem("exportadora");
+        const variedad = localStorage.getItem("variedad");
+        const lote = localStorage.getItem("lote");
+
+        if (exportadora) document.getElementById("exportadora").value = exportadora;
+        if (variedad) document.getElementById("variedad").value = variedad;
+        if (lote) document.getElementById("lote").value = lote;
+
         cargarRegistros();
       });
 
@@ -311,7 +283,6 @@
           document.getElementById("loginCard").classList.add("hidden");
           document.getElementById("registrosCard").classList.remove("hidden");
           document.getElementById("formCard").classList.remove("hidden");
-          document.getElementById("app").classList.remove("hidden");
           document.getElementById("salida").focus();
 
           cargarRegistros();
@@ -334,14 +305,6 @@
           peso: document.getElementById("peso").value
         };
 
-        // Validar que el peso no esté vacío y sea un número válido
-        if (!data.peso || isNaN(data.peso)) {
-          alert("Por favor ingrese un peso válido.");
-          return;
-        }
-
-        console.log("Datos a enviar:", data);  // Depuración
-
         fetch(SCRIPT_URL, {
           method: "POST",
           body: new URLSearchParams(data)
@@ -350,19 +313,115 @@
           .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
 
-            // Actualizar historial de pesos por calibre
-            if (!historialPesos[data.calibre]) {
-              historialPesos[data.calibre] = [];
-            }
-            historialPesos[data.calibre].push({
-              peso: data.peso
-            });
+            localStorage.setItem("exportadora", data.exportadora);
+            localStorage.setItem("variedad", data.variedad);
+            localStorage.setItem("lote", data.lote);
 
-            // Actualizar el gráfico para el calibre ingresado
-            dibujarGrafico(data.calibre);
+            document.getElementById("calibre").value = "";
+            document.getElementById("peso").value = "";
+            document.getElementById("categoria").value = "";
+            document.getElementById("salida").value = "";
+            document.getElementById("operador").value = operadorData.operador;
+
+            document.getElementById("salida").focus();
+
+            setTimeout(() => {
+              cargarRegistros();
+              document.getElementById("msg").innerText = "";
+            }, 500);
           })
-          .catch(err => console.error("Error guardando:", err));
+          .catch(err => {
+            console.error("Error guardando:", err);
+            document.getElementById("msg").innerText = "Error al guardar";
+          });
       });
+
+      function generarColor(index) {
+        const colores = [
+          "#1e3c72", "#2a5298", "#4caf50", "#ff9800", "#e91e63",
+          "#9c27b0", "#009688", "#f44336", "#795548", "#607d8b",
+          "#3f51b5", "#8bc34a", "#ffc107", "#673ab7", "#00bcd4"
+        ];
+        return colores[index % colores.length];
+      }
+
+      function actualizarGrafico(registros) {
+        const ctx = document.getElementById("graficoPesos").getContext("2d");
+
+        const registrosOrdenados = [...registros].reverse(); 
+        // reverse porque la tabla se muestra al revés, pero el gráfico conviene cronológico
+
+        const labels = registrosOrdenados.map((_, i) => `Caja ${i + 1}`);
+
+        const calibresUnicos = [...new Set(registrosOrdenados.map(r => String(r[5]).trim()))];
+
+        const datasets = calibresUnicos.map((calibre, index) => {
+          const data = registrosOrdenados.map(r => {
+            const calibreFila = String(r[5]).trim();
+            const pesoFila = parseFloat(String(r[9]).replace(",", "."));
+            return calibreFila === calibre ? pesoFila : null;
+          });
+
+          return {
+            label: `Calibre ${calibre}`,
+            data: data,
+            borderColor: generarColor(index),
+            backgroundColor: generarColor(index),
+            tension: 0.2,
+            spanGaps: false,
+            fill: false,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          };
+        });
+
+        if (grafico) {
+          grafico.destroy();
+        }
+
+        grafico = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: "nearest",
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                position: "top"
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.dataset.label}: ${context.raw} kg`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Secuencia de cajas pesadas"
+                }
+              },
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: "Peso (kg)"
+                }
+              }
+            }
+          }
+        });
+      }
 
       function cargarRegistros() {
         fetch(SCRIPT_URL)
@@ -373,34 +432,35 @@
 
             const registrosFiltrados = filtrarRegistrosPorDia(data);
 
-            console.log("Registros filtrados para hoy:", registrosFiltrados);  // Depuración
-
             if (registrosFiltrados.length === 0) {
               tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
-            } else {
-              registrosFiltrados.reverse().forEach(row => {
-                tbody.innerHTML += `
-                  <tr>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td>${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                    <td>${row[7]}</td>
-                    <td>${row[8]}</td>
-                    <td>${row[9]}</td>
-                  </tr>
-                `;
-              });
-
-              // Llamamos a la función para dibujar el gráfico para cada calibre
-              const calibresRegistrados = [...new Set(registrosFiltrados.map(row => row[5]))];
-              calibresRegistrados.forEach(calibre => dibujarGrafico(calibre));
+              actualizarGrafico([]);
+              return;
             }
+
+            // Tabla: más reciente arriba
+            [...registrosFiltrados].reverse().forEach(row => {
+              tbody.innerHTML += `
+                <tr>
+                  <td>${row[0]}</td>
+                  <td>${row[1]}</td>
+                  <td>${row[2]}</td>
+                  <td>${row[3]}</td>
+                  <td>${row[4]}</td>
+                  <td>${row[5]}</td>
+                  <td>${row[6]}</td>
+                  <td>${row[7]}</td>
+                  <td>${row[8]}</td>
+                  <td>${row[9]}</td>
+                </tr>
+              `;
+            });
+
+            actualizarGrafico(registrosFiltrados);
           })
-          .catch(err => console.error("Error cargando registros:", err));
+          .catch(err => {
+            console.error("Error cargando registros:", err);
+          });
       }
     </script>
   </body>
