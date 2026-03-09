@@ -105,6 +105,12 @@
         width: 100%;
         height: 420px;
       }
+
+      .estado-sync {
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+      }
     </style>
   </head>
 
@@ -188,6 +194,7 @@
           </thead>
           <tbody id="tabla"></tbody>
         </table>
+        <div class="estado-sync" id="estadoSync">Sincronizando...</div>
       </div>
 
       <div class="card" id="graficoCard">
@@ -201,8 +208,10 @@
     <script>
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
+      const estadoSync = document.getElementById("estadoSync");
       let grafico = null;
-      let registrosHoy = [];
+      let autoRefresh = null;
+      let cargando = false;
 
       for (let i = 1; i <= 41; i++) {
         let option = document.createElement("option");
@@ -275,16 +284,16 @@
         return colores[index % colores.length];
       }
 
-      function actualizarTabla() {
+      function actualizarTabla(registros) {
         const tbody = document.getElementById("tabla");
         tbody.innerHTML = "";
 
-        if (!registrosHoy || registrosHoy.length === 0) {
+        if (!registros || registros.length === 0) {
           tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
           return;
         }
 
-        [...registrosHoy].reverse().forEach(row => {
+        [...registros].reverse().forEach(row => {
           tbody.innerHTML += `
             <tr>
               <td>${row[0]}</td>
@@ -365,6 +374,7 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: false,
             interaction: {
               mode: "nearest",
               intersect: false
@@ -404,16 +414,31 @@
       }
 
       function cargarRegistros() {
-        fetch(SCRIPT_URL)
+        if (cargando) return;
+        cargando = true;
+
+        fetch(SCRIPT_URL + "?t=" + new Date().getTime())
           .then(res => res.json())
           .then(data => {
-            registrosHoy = filtrarRegistrosPorDia(data);
-            actualizarTabla();
-            actualizarGrafico(registrosHoy);
+            const registrosFiltrados = filtrarRegistrosPorDia(data);
+            actualizarTabla(registrosFiltrados);
+            actualizarGrafico(registrosFiltrados);
+
+            const ahora = new Date();
+            estadoSync.innerText = "Última actualización: " + ahora.toLocaleTimeString("es-CL");
           })
           .catch(err => {
             console.error("Error cargando registros:", err);
+            estadoSync.innerText = "Error al sincronizar";
+          })
+          .finally(() => {
+            cargando = false;
           });
+      }
+
+      function iniciarAutoRefresh() {
+        if (autoRefresh) clearInterval(autoRefresh);
+        autoRefresh = setInterval(cargarRegistros, 3000);
       }
 
       window.addEventListener("load", function () {
@@ -426,6 +451,7 @@
         if (lote) document.getElementById("lote").value = lote;
 
         cargarRegistros();
+        iniciarAutoRefresh();
       });
 
       function ingresarOperador() {
@@ -472,33 +498,6 @@
         })
           .then(res => res.json())
           .then(() => {
-            const ahora = new Date();
-
-            const fecha = formatDate(ahora);
-            const hora = ahora.toLocaleTimeString("es-CL", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit"
-            });
-
-            const nuevoRegistro = [
-              fecha,
-              hora,
-              data.operador,
-              data.exportadora,
-              data.salida,
-              data.calibre,
-              data.categoria,
-              data.variedad,
-              data.lote,
-              data.peso
-            ];
-
-            registrosHoy.push(nuevoRegistro);
-
-            actualizarTabla();
-            actualizarGrafico(registrosHoy);
-
             document.getElementById("msg").innerText = "Guardado correctamente";
 
             localStorage.setItem("exportadora", data.exportadora);
@@ -516,6 +515,8 @@
             setTimeout(() => {
               document.getElementById("msg").innerText = "";
             }, 1500);
+
+            cargarRegistros();
           })
           .catch(err => {
             console.error("Error guardando:", err);
