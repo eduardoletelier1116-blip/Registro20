@@ -202,6 +202,7 @@
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
       let grafico = null;
+      let registrosHoy = [];
 
       for (let i = 1; i <= 41; i++) {
         let option = document.createElement("option");
@@ -246,94 +247,12 @@
           if (!row || row.length < 10) return false;
 
           const fechaOriginal = row[0];
-
           if (String(fechaOriginal).toLowerCase() === "fecha") return false;
 
           const fechaRegistro = formatDate(fechaOriginal);
           return fechaRegistro === fechaHoy;
         });
       }
-
-      window.addEventListener("load", function () {
-        const exportadora = localStorage.getItem("exportadora");
-        const variedad = localStorage.getItem("variedad");
-        const lote = localStorage.getItem("lote");
-
-        if (exportadora) document.getElementById("exportadora").value = exportadora;
-        if (variedad) document.getElementById("variedad").value = variedad;
-        if (lote) document.getElementById("lote").value = lote;
-
-        cargarRegistros();
-      });
-
-      function ingresarOperador() {
-        const nombre = document.getElementById("nombreOperador").value.trim();
-        const clave = document.getElementById("claveOperador").value.trim();
-
-        if (!nombre || !clave) {
-          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
-          return;
-        }
-
-        if (clave === "fresh") {
-          operadorData.operador = nombre;
-          document.getElementById("operador").value = operadorData.operador;
-
-          document.getElementById("loginCard").classList.add("hidden");
-          document.getElementById("registrosCard").classList.remove("hidden");
-          document.getElementById("formCard").classList.remove("hidden");
-          document.getElementById("salida").focus();
-
-          cargarRegistros();
-        } else {
-          document.getElementById("msgLogin").innerText = "Clave incorrecta";
-        }
-      }
-
-      document.getElementById("form").addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const data = {
-          operador: operadorData.operador,
-          exportadora: document.getElementById("exportadora").value,
-          salida: document.getElementById("salida").value,
-          calibre: document.getElementById("calibre").value,
-          categoria: document.getElementById("categoria").value,
-          variedad: document.getElementById("variedad").value,
-          lote: document.getElementById("lote").value,
-          peso: document.getElementById("peso").value
-        };
-
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: new URLSearchParams(data)
-        })
-          .then(res => res.json())
-          .then(() => {
-            document.getElementById("msg").innerText = "Guardado correctamente";
-
-            localStorage.setItem("exportadora", data.exportadora);
-            localStorage.setItem("variedad", data.variedad);
-            localStorage.setItem("lote", data.lote);
-
-            document.getElementById("calibre").value = "";
-            document.getElementById("peso").value = "";
-            document.getElementById("categoria").value = "";
-            document.getElementById("salida").value = "";
-            document.getElementById("operador").value = operadorData.operador;
-
-            document.getElementById("salida").focus();
-
-            setTimeout(() => {
-              cargarRegistros();
-              document.getElementById("msg").innerText = "";
-            }, 500);
-          })
-          .catch(err => {
-            console.error("Error guardando:", err);
-            document.getElementById("msg").innerText = "Error al guardar";
-          });
-      });
 
       function generarColor(index) {
         const colores = [
@@ -356,6 +275,33 @@
         return colores[index % colores.length];
       }
 
+      function actualizarTabla() {
+        const tbody = document.getElementById("tabla");
+        tbody.innerHTML = "";
+
+        if (!registrosHoy || registrosHoy.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
+          return;
+        }
+
+        [...registrosHoy].reverse().forEach(row => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${row[0]}</td>
+              <td>${row[1]}</td>
+              <td>${row[2]}</td>
+              <td>${row[3]}</td>
+              <td>${row[4]}</td>
+              <td>${row[5]}</td>
+              <td>${row[6]}</td>
+              <td>${row[7]}</td>
+              <td>${row[8]}</td>
+              <td>${row[9]}</td>
+            </tr>
+          `;
+        });
+      }
+
       function actualizarGrafico(registros) {
         const canvas = document.getElementById("graficoPesos");
         const ctx = canvas.getContext("2d");
@@ -368,11 +314,9 @@
           return;
         }
 
-        const registrosOrdenados = [...registros];
-
         const gruposPorCalibre = {};
 
-        registrosOrdenados.forEach(row => {
+        registros.forEach(row => {
           const calibre = String(row[5]).trim();
           const peso = parseFloat(String(row[9]).replace(",", "."));
 
@@ -463,40 +407,121 @@
         fetch(SCRIPT_URL)
           .then(res => res.json())
           .then(data => {
-            const tbody = document.getElementById("tabla");
-            tbody.innerHTML = "";
-
-            const registrosFiltrados = filtrarRegistrosPorDia(data);
-
-            if (registrosFiltrados.length === 0) {
-              tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
-              actualizarGrafico([]);
-              return;
-            }
-
-            [...registrosFiltrados].reverse().forEach(row => {
-              tbody.innerHTML += `
-                <tr>
-                  <td>${row[0]}</td>
-                  <td>${row[1]}</td>
-                  <td>${row[2]}</td>
-                  <td>${row[3]}</td>
-                  <td>${row[4]}</td>
-                  <td>${row[5]}</td>
-                  <td>${row[6]}</td>
-                  <td>${row[7]}</td>
-                  <td>${row[8]}</td>
-                  <td>${row[9]}</td>
-                </tr>
-              `;
-            });
-
-            actualizarGrafico(registrosFiltrados);
+            registrosHoy = filtrarRegistrosPorDia(data);
+            actualizarTabla();
+            actualizarGrafico(registrosHoy);
           })
           .catch(err => {
             console.error("Error cargando registros:", err);
           });
       }
+
+      window.addEventListener("load", function () {
+        const exportadora = localStorage.getItem("exportadora");
+        const variedad = localStorage.getItem("variedad");
+        const lote = localStorage.getItem("lote");
+
+        if (exportadora) document.getElementById("exportadora").value = exportadora;
+        if (variedad) document.getElementById("variedad").value = variedad;
+        if (lote) document.getElementById("lote").value = lote;
+
+        cargarRegistros();
+      });
+
+      function ingresarOperador() {
+        const nombre = document.getElementById("nombreOperador").value.trim();
+        const clave = document.getElementById("claveOperador").value.trim();
+
+        if (!nombre || !clave) {
+          document.getElementById("msgLogin").innerText = "Ingrese nombre y clave";
+          return;
+        }
+
+        if (clave === "fresh") {
+          operadorData.operador = nombre;
+          document.getElementById("operador").value = operadorData.operador;
+
+          document.getElementById("loginCard").classList.add("hidden");
+          document.getElementById("registrosCard").classList.remove("hidden");
+          document.getElementById("formCard").classList.remove("hidden");
+          document.getElementById("salida").focus();
+
+          cargarRegistros();
+        } else {
+          document.getElementById("msgLogin").innerText = "Clave incorrecta";
+        }
+      }
+
+      document.getElementById("form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const data = {
+          operador: operadorData.operador,
+          exportadora: document.getElementById("exportadora").value,
+          salida: document.getElementById("salida").value,
+          calibre: document.getElementById("calibre").value,
+          categoria: document.getElementById("categoria").value,
+          variedad: document.getElementById("variedad").value,
+          lote: document.getElementById("lote").value,
+          peso: document.getElementById("peso").value
+        };
+
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: new URLSearchParams(data)
+        })
+          .then(res => res.json())
+          .then(() => {
+            const ahora = new Date();
+
+            const fecha = formatDate(ahora);
+            const hora = ahora.toLocaleTimeString("es-CL", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            });
+
+            const nuevoRegistro = [
+              fecha,
+              hora,
+              data.operador,
+              data.exportadora,
+              data.salida,
+              data.calibre,
+              data.categoria,
+              data.variedad,
+              data.lote,
+              data.peso
+            ];
+
+            registrosHoy.push(nuevoRegistro);
+
+            actualizarTabla();
+            actualizarGrafico(registrosHoy);
+
+            document.getElementById("msg").innerText = "Guardado correctamente";
+
+            localStorage.setItem("exportadora", data.exportadora);
+            localStorage.setItem("variedad", data.variedad);
+            localStorage.setItem("lote", data.lote);
+
+            document.getElementById("calibre").value = "";
+            document.getElementById("peso").value = "";
+            document.getElementById("categoria").value = "";
+            document.getElementById("salida").value = "";
+            document.getElementById("operador").value = operadorData.operador;
+
+            document.getElementById("salida").focus();
+
+            setTimeout(() => {
+              document.getElementById("msg").innerText = "";
+            }, 1500);
+          })
+          .catch(err => {
+            console.error("Error guardando:", err);
+            document.getElementById("msg").innerText = "Error al guardar";
+          });
+      });
     </script>
   </body>
 </html>
