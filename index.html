@@ -417,6 +417,34 @@
         }).then(res => res.json());
       }
 
+      function cargarObjetivosDesdeServidor() {
+        return fetch(SCRIPT_URL + "?tipo=objetivos&t=" + new Date().getTime())
+          .then(res => res.json())
+          .then(data => {
+            if (!Array.isArray(data)) {
+              reglasObjetivo = [];
+              return;
+            }
+
+            reglasObjetivo = data
+              .filter((row, index) => row && row.length >= 3 && index > 0)
+              .map(r => ({
+                desde: parseInt(r[0], 10),
+                hasta: parseInt(r[1], 10),
+                objetivo: Number(normalizarNumero(r[2]).toFixed(2))
+              }))
+              .filter(r =>
+                !isNaN(r.desde) &&
+                !isNaN(r.hasta) &&
+                !isNaN(r.objetivo)
+              );
+          })
+          .catch(err => {
+            console.error("Error cargando objetivos:", err);
+            reglasObjetivo = [];
+          });
+      }
+
       function actualizarEstadoObjetivos() {
         const estado = document.getElementById("estadoObjetivos");
         const info = document.getElementById("infoObjetivos");
@@ -491,9 +519,12 @@
 
         guardarObjetivosEnServidor()
           .then(resp => {
-            if (!resp.ok) {
-              throw new Error(resp.error || "No se pudieron guardar los objetivos.");
+            if (resp.status !== "success") {
+              throw new Error(resp.message || "No se pudieron guardar los objetivos.");
             }
+            return cargarObjetivosDesdeServidor();
+          })
+          .then(() => {
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -513,9 +544,12 @@
 
         guardarObjetivosEnServidor()
           .then(resp => {
-            if (!resp.ok) {
-              throw new Error(resp.error || "No se pudo actualizar la lista.");
+            if (resp.status !== "success") {
+              throw new Error(resp.message || "No se pudo actualizar la lista.");
             }
+            return cargarObjetivosDesdeServidor();
+          })
+          .then(() => {
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -530,9 +564,12 @@
 
         guardarObjetivosEnServidor()
           .then(resp => {
-            if (!resp.ok) {
-              throw new Error(resp.error || "No se pudieron limpiar los objetivos.");
+            if (resp.status !== "success") {
+              throw new Error(resp.message || "No se pudieron limpiar los objetivos.");
             }
+            return cargarObjetivosDesdeServidor();
+          })
+          .then(() => {
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -550,9 +587,12 @@
 
         guardarObjetivosEnServidor()
           .then(resp => {
-            if (!resp.ok) {
-              throw new Error(resp.error || "No se pudieron guardar los objetivos ejemplo.");
+            if (resp.status !== "success") {
+              throw new Error(resp.message || "No se pudieron guardar los objetivos ejemplo.");
             }
+            return cargarObjetivosDesdeServidor();
+          })
+          .then(() => {
             renderTablaObjetivos();
             cargarRegistros();
           })
@@ -735,39 +775,13 @@
         if (cargando) return;
         cargando = true;
 
-        fetch(SCRIPT_URL + "?t=" + new Date().getTime())
-          .then(res => res.json())
-          .then(data => {
-            console.log("Respuesta servidor:", data);
-
-            if (!data.ok) {
-              throw new Error(data.error || "Error en servidor");
-            }
-
-            const registros = Array.isArray(data.registros) ? data.registros : [];
-            const objetivosRaw = Array.isArray(data.objetivos) ? data.objetivos : [];
-
-            reglasObjetivo = objetivosRaw
-              .slice(1)
-              .map(r => ({
-                desde: parseInt(r[0], 10),
-                hasta: parseInt(r[1], 10),
-                objetivo: Number(normalizarNumero(r[2]).toFixed(2))
-              }))
-              .filter(r =>
-                !isNaN(r.desde) &&
-                !isNaN(r.hasta) &&
-                !isNaN(r.objetivo)
-              );
-
+        Promise.all([
+          fetch(SCRIPT_URL + "?t=" + new Date().getTime()).then(res => res.json()),
+          cargarObjetivosDesdeServidor()
+        ])
+          .then(([data]) => {
+            const registrosFiltrados = filtrarRegistrosPorDia(data);
             renderTablaObjetivos();
-
-            const registrosSinEncabezado = registros.filter(row => {
-              return row && row.length >= 10 && String(row[0]).toLowerCase() !== "fecha";
-            });
-
-            const registrosFiltrados = filtrarRegistrosPorDia(registrosSinEncabezado);
-
             actualizarTabla(registrosFiltrados);
             actualizarGrafico(registrosFiltrados);
 
@@ -776,7 +790,7 @@
           })
           .catch(err => {
             console.error("Error cargando registros:", err);
-            estadoSync.innerText = "Error al sincronizar: " + err.message;
+            estadoSync.innerText = "Error al sincronizar";
           })
           .finally(() => {
             cargando = false;
@@ -846,11 +860,7 @@
           body: new URLSearchParams(data)
         })
           .then(res => res.json())
-          .then(resp => {
-            if (!resp.ok) {
-              throw new Error(resp.error || "Error al guardar");
-            }
-
+          .then(() => {
             document.getElementById("msg").innerText = "Guardado correctamente";
 
             localStorage.setItem("exportadora", data.exportadora);
