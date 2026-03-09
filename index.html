@@ -219,17 +219,17 @@
 
       function formatDate(date) {
         if (date instanceof Date) {
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, "0");
+          const month = String(date.getMonth() + 1).padStart(2, "0");
           const year = date.getFullYear();
           return `${year}-${month}-${day}`;
         }
 
-        if (typeof date === 'string' && date.includes('/')) {
-          const parts = date.split('/');
+        if (typeof date === "string" && date.includes("/")) {
+          const parts = date.split("/");
           if (parts.length === 3) {
-            const day = String(parts[0]).padStart(2, '0');
-            const month = String(parts[1]).padStart(2, '0');
+            const day = String(parts[0]).padStart(2, "0");
+            const month = String(parts[1]).padStart(2, "0");
             const year = parts[2];
             return `${year}-${month}-${day}`;
           }
@@ -247,7 +247,6 @@
 
           const fechaOriginal = row[0];
 
-          // Evitar fila de encabezados si viene desde la hoja
           if (String(fechaOriginal).toLowerCase() === "fecha") return false;
 
           const fechaRegistro = formatDate(fechaOriginal);
@@ -338,40 +337,74 @@
 
       function generarColor(index) {
         const colores = [
-          "#1e3c72", "#2a5298", "#4caf50", "#ff9800", "#e91e63",
-          "#9c27b0", "#009688", "#f44336", "#795548", "#607d8b",
-          "#3f51b5", "#8bc34a", "#ffc107", "#673ab7", "#00bcd4"
+          "#1e3c72",
+          "#2a5298",
+          "#4caf50",
+          "#ff9800",
+          "#e91e63",
+          "#9c27b0",
+          "#009688",
+          "#f44336",
+          "#795548",
+          "#607d8b",
+          "#3f51b5",
+          "#8bc34a",
+          "#ffc107",
+          "#673ab7",
+          "#00bcd4"
         ];
         return colores[index % colores.length];
       }
 
       function actualizarGrafico(registros) {
-        const ctx = document.getElementById("graficoPesos").getContext("2d");
+        const canvas = document.getElementById("graficoPesos");
+        const ctx = canvas.getContext("2d");
 
-        const registrosOrdenados = [...registros].reverse(); 
-        // reverse porque la tabla se muestra al revés, pero el gráfico conviene cronológico
+        if (!registros || registros.length === 0) {
+          if (grafico) {
+            grafico.destroy();
+            grafico = null;
+          }
+          return;
+        }
 
-        const labels = registrosOrdenados.map((_, i) => `Caja ${i + 1}`);
+        const registrosOrdenados = [...registros];
 
-        const calibresUnicos = [...new Set(registrosOrdenados.map(r => String(r[5]).trim()))];
+        const gruposPorCalibre = {};
+
+        registrosOrdenados.forEach(row => {
+          const calibre = String(row[5]).trim();
+          const peso = parseFloat(String(row[9]).replace(",", "."));
+
+          if (!calibre || isNaN(peso)) return;
+
+          if (!gruposPorCalibre[calibre]) {
+            gruposPorCalibre[calibre] = [];
+          }
+
+          gruposPorCalibre[calibre].push(peso);
+        });
+
+        const maxCajas = Math.max(
+          ...Object.values(gruposPorCalibre).map(arr => arr.length),
+          0
+        );
+
+        const labels = Array.from({ length: maxCajas }, (_, i) => `Caja ${i + 1}`);
+
+        const calibresUnicos = Object.keys(gruposPorCalibre);
 
         const datasets = calibresUnicos.map((calibre, index) => {
-          const data = registrosOrdenados.map(r => {
-            const calibreFila = String(r[5]).trim();
-            const pesoFila = parseFloat(String(r[9]).replace(",", "."));
-            return calibreFila === calibre ? pesoFila : null;
-          });
-
           return {
             label: `Calibre ${calibre}`,
-            data: data,
+            data: gruposPorCalibre[calibre],
             borderColor: generarColor(index),
             backgroundColor: generarColor(index),
-            tension: 0.2,
-            spanGaps: false,
+            tension: 0.25,
             fill: false,
             pointRadius: 4,
-            pointHoverRadius: 6
+            pointHoverRadius: 6,
+            spanGaps: false
           };
         });
 
@@ -398,6 +431,9 @@
               },
               tooltip: {
                 callbacks: {
+                  title: function(context) {
+                    return context[0].label;
+                  },
                   label: function(context) {
                     return `${context.dataset.label}: ${context.raw} kg`;
                   }
@@ -408,7 +444,7 @@
               x: {
                 title: {
                   display: true,
-                  text: "Secuencia de cajas pesadas"
+                  text: "Número de caja por calibre"
                 }
               },
               y: {
@@ -438,7 +474,6 @@
               return;
             }
 
-            // Tabla: más reciente arriba
             [...registrosFiltrados].reverse().forEach(row => {
               tbody.innerHTML += `
                 <tr>
