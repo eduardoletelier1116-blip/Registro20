@@ -103,13 +103,20 @@
       .chart-container {
         position: relative;
         width: 100%;
-        height: 420px;
+        height: 460px;
       }
 
       .estado-sync {
         font-size: 12px;
         color: #666;
         margin-top: 8px;
+      }
+
+      .info-objetivos {
+        font-size: 12px;
+        color: #555;
+        margin-top: 10px;
+        line-height: 1.5;
       }
     </style>
   </head>
@@ -202,6 +209,9 @@
         <div class="chart-container">
           <canvas id="graficoPesos"></canvas>
         </div>
+        <div class="info-objetivos" id="infoObjetivos">
+          Objetivos activos: calibres 72-125 = 19.1 kg | calibres 150-216 = 20.1 kg
+        </div>
       </div>
     </div>
 
@@ -209,9 +219,19 @@
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEWxdRCwj549evEfZ47u6m2uDKj08gAvKN5zlUd67axC9kbmOVrx-Xd3O7hCggPErL/exec";
       const salidaSelect = document.getElementById("salida");
       const estadoSync = document.getElementById("estadoSync");
+
       let grafico = null;
       let autoRefresh = null;
       let cargando = false;
+
+      /*
+        EDITA SOLO ESTE BLOQUE CUANDO CAMBIEN LOS OBJETIVOS
+        Puedes cambiar rangos, pesos y luego guardar.
+      */
+      const REGLAS_OBJETIVO = [
+        { exportadora: "TODAS", desde: 72, hasta: 125, objetivo: 19.1 },
+        { exportadora: "TODAS", desde: 150, hasta: 216, objetivo: 20.1 }
+      ];
 
       for (let i = 1; i <= 41; i++) {
         let option = document.createElement("option");
@@ -311,9 +331,42 @@
         });
       }
 
+      function obtenerObjetivo(exportadora, calibre) {
+        const calibreNum = parseInt(calibre, 10);
+        if (isNaN(calibreNum)) return null;
+
+        const exportadoraNormalizada = String(exportadora || "").trim().toUpperCase();
+
+        for (const regla of REGLAS_OBJETIVO) {
+          const exportadoraRegla = String(regla.exportadora || "TODAS").trim().toUpperCase();
+          const coincideExportadora =
+            exportadoraRegla === "TODAS" || exportadoraRegla === exportadoraNormalizada;
+
+          const coincideCalibre =
+            calibreNum >= regla.desde && calibreNum <= regla.hasta;
+
+          if (coincideExportadora && coincideCalibre) {
+            return regla.objetivo;
+          }
+        }
+
+        return null;
+      }
+
+      function construirTextoObjetivos() {
+        return REGLAS_OBJETIVO.map(regla => {
+          const textoExportadora = regla.exportadora === "TODAS"
+            ? "todas las exportadoras"
+            : regla.exportadora;
+          return `${textoExportadora}: calibres ${regla.desde}-${regla.hasta} = ${regla.objetivo} kg`;
+        }).join(" | ");
+      }
+
       function actualizarGrafico(registros) {
         const canvas = document.getElementById("graficoPesos");
         const ctx = canvas.getContext("2d");
+        document.getElementById("infoObjetivos").innerText =
+          "Objetivos activos: " + construirTextoObjetivos();
 
         if (!registros || registros.length === 0) {
           if (grafico) {
@@ -326,39 +379,69 @@
         const gruposPorCalibre = {};
 
         registros.forEach(row => {
-          const calibre = String(row[5]).trim();
+          const exportadora = String(row[3] || "").trim();
+          const calibre = String(row[5] || "").trim();
           const peso = parseFloat(String(row[9]).replace(",", "."));
 
           if (!calibre || isNaN(peso)) return;
 
           if (!gruposPorCalibre[calibre]) {
-            gruposPorCalibre[calibre] = [];
+            gruposPorCalibre[calibre] = {
+              pesos: [],
+              exportadora: exportadora
+            };
           }
 
-          gruposPorCalibre[calibre].push(peso);
+          gruposPorCalibre[calibre].pesos.push(peso);
         });
 
         const maxCajas = Math.max(
-          ...Object.values(gruposPorCalibre).map(arr => arr.length),
+          ...Object.values(gruposPorCalibre).map(item => item.pesos.length),
           0
         );
 
         const labels = Array.from({ length: maxCajas }, (_, i) => `Caja ${i + 1}`);
+        const calibresUnicos = Object.keys(gruposPorCalibre)
+          .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
 
-        const calibresUnicos = Object.keys(gruposPorCalibre);
+        const datasets = [];
 
-        const datasets = calibresUnicos.map((calibre, index) => {
-          return {
-            label: `Calibre ${calibre}`,
-            data: gruposPorCalibre[calibre],
-            borderColor: generarColor(index),
-            backgroundColor: generarColor(index),
+        calibresUnicos.forEach((calibre, index) => {
+          const info = gruposPorCalibre[calibre];
+          const colorBase = generarColor(index);
+
+          datasets.push({
+            label: `Calibre ${calibre} - Real`,
+            data: info.pesos,
+            borderColor: colorBase,
+            backgroundColor: colorBase,
             tension: 0.25,
             fill: false,
             pointRadius: 4,
             pointHoverRadius: 6,
-            spanGaps: false
-          };
+            spanGaps: false,
+            borderWidth: 2
+          });
+
+          const objetivo = obtenerObjetivo(info.exportadora, calibre);
+
+          if (objetivo !== null) {
+            const lineaObjetivo = Array(info.pesos.length).fill(objetivo);
+
+            datasets.push({
+              label: `Calibre ${calibre} - Objetivo (${objetivo} kg)`,
+              data: lineaObjetivo,
+              borderColor: colorBase,
+              backgroundColor: colorBase,
+              borderDash: [8, 6],
+              tension: 0,
+              fill: false,
+              pointRadius: 0,
+              pointHoverRadius: 0,
+              spanGaps: false,
+              borderWidth: 2
+            });
+          }
         });
 
         if (grafico) {
