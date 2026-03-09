@@ -211,7 +211,7 @@
 
           <div>
             <label for="pesoObjetivo"><strong>Peso objetivo (kg)</strong></label>
-            <input type="number" step="0.01" id="pesoObjetivo" placeholder="Ej: 19.1">
+            <input type="text" id="pesoObjetivo" placeholder="Ej: 19,1 o 19.1">
           </div>
 
           <div>
@@ -344,6 +344,12 @@
         lote: ""
       };
 
+      function normalizarNumero(valor) {
+        if (valor === null || valor === undefined) return NaN;
+        const limpio = String(valor).trim().replace(",", ".");
+        return parseFloat(limpio);
+      }
+
       function formatDate(date) {
         if (date instanceof Date) {
           const day = String(date.getDate()).padStart(2, "0");
@@ -408,7 +414,17 @@
       function cargarObjetivosDesdeLocalStorage() {
         try {
           const guardado = localStorage.getItem("reglasObjetivoTurno");
-          reglasObjetivo = guardado ? JSON.parse(guardado) : [];
+          const datos = guardado ? JSON.parse(guardado) : [];
+
+          reglasObjetivo = datos.map(r => ({
+            desde: parseInt(r.desde, 10),
+            hasta: parseInt(r.hasta, 10),
+            objetivo: Number(normalizarNumero(r.objetivo).toFixed(2))
+          })).filter(r =>
+            !isNaN(r.desde) &&
+            !isNaN(r.hasta) &&
+            !isNaN(r.objetivo)
+          );
         } catch (e) {
           reglasObjetivo = [];
         }
@@ -466,7 +482,7 @@
       function agregarReglaObjetivo() {
         const desde = parseInt(document.getElementById("calibreDesde").value, 10);
         const hasta = parseInt(document.getElementById("calibreHasta").value, 10);
-        const objetivo = parseFloat(document.getElementById("pesoObjetivo").value);
+        const objetivo = normalizarNumero(document.getElementById("pesoObjetivo").value);
 
         if (isNaN(desde) || isNaN(hasta) || isNaN(objetivo)) {
           alert("Completa calibre desde, calibre hasta y peso objetivo.");
@@ -481,7 +497,7 @@
         reglasObjetivo.push({
           desde: desde,
           hasta: hasta,
-          objetivo: objetivo
+          objetivo: Number(objetivo.toFixed(2))
         });
 
         reglasObjetivo.sort((a, b) => a.desde - b.desde);
@@ -526,7 +542,7 @@
 
         for (const regla of reglasObjetivo) {
           if (calibreNum >= regla.desde && calibreNum <= regla.hasta) {
-            return regla.objetivo;
+            return Number(normalizarNumero(regla.objetivo).toFixed(2));
           }
         }
 
@@ -578,7 +594,7 @@
 
         registros.forEach(row => {
           const calibre = String(row[5]).trim();
-          const peso = parseFloat(String(row[9]).replace(",", "."));
+          const peso = normalizarNumero(row[9]);
 
           if (!calibre || isNaN(peso)) return;
 
@@ -623,7 +639,7 @@
           if (objetivo !== null) {
             datasets.push({
               label: `Calibre ${calibre} - Objetivo (${Number(objetivo).toFixed(2)} kg)`,
-              data: Array(pesos.length).fill(objetivo),
+              data: Array(pesos.length).fill(Number(objetivo.toFixed(2))),
               borderColor: colorBase,
               backgroundColor: colorBase,
               borderDash: [8, 6],
