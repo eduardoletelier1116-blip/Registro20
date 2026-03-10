@@ -886,6 +886,26 @@
             document.getElementById("msg").innerText = "Error al guardar";
           });
       });
+
+      // Escuchar el cambio en la exportadora
+      document.getElementById("exportadora").addEventListener("change", function() {
+        resetearGraficoYRegistros();
+      });
+
+      function resetearGraficoYRegistros() {
+        // Limpiar el gráfico
+        if (grafico) {
+          grafico.destroy();
+          grafico = null;
+        }
+
+        // Limpiar la tabla de registros
+        const tbody = document.getElementById("tabla");
+        tbody.innerHTML = `<tr><td colspan="10">No hay registros para hoy.</td></tr>`;
+
+        // Recargar registros con los datos de la nueva exportadora
+        cargarRegistros();
+      }
     </script>
   </body>
 </html>
