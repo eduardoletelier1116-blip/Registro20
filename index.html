@@ -50,37 +50,20 @@
             <p id="msgLogin" style="color:red;"></p>
         </div>
 
-        <div class="card hidden" id="maestroCard">
-            <h3 class="subtitulo">Configuración Maestro de Exportadoras</h3>
-            <div class="row-3">
-                <input type="text" id="mExportadora" placeholder="Exportadora">
-                <input type="number" id="mDesde" placeholder="Precalibre">
-                <input type="number" id="mHasta" placeholder="Sobrecalibre">
-                <input type="number" step="0.01" id="mObjetivo" placeholder="Peso (kg)">
-                <button onclick="guardarConfigMaestra()">Guardar en Maestro</button>
-            </div>
-            <div style="margin-top:10px; max-height:150px; overflow-y:auto; border:1px solid #eee;">
-                <table id="tablaMaestra">
-                    <thead><tr><th>Exportadora</th><th>Precalibre</th><th>Sobrecalibre</th><th>Peso</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
         <div class="card hidden" id="objetivosCard">
             <h3 class="subtitulo">Objetivos del turno</h3>
             <div class="row-3">
                 <div>
-                    <label for="calibreDesde"><strong>Calibre desde</strong></label>
+                    <label for="calibreDesde"><strong>precalibre</strong></label>
                     <input type="number" id="calibreDesde" placeholder="Ej: 72">
                 </div>
                 <div>
-                    <label for="calibreHasta"><strong>Calibre hasta</strong></label>
+                    <label for="calibreHasta"><strong>sobrecalibre</strong></label>
                     <input type="number" id="calibreHasta" placeholder="Ej: 125">
                 </div>
                 <div>
                     <label for="pesoObjetivo"><strong>Peso objetivo (kg)</strong></label>
-                    <input type="text" id="pesoObjetivo" placeholder="Ej: 19,1 o 19.1">
+                    <input type="text" id="pesoObjetivo" placeholder="Ej: 19,1">
                 </div>
                 <div>
                     <button type="button" onclick="agregarReglaObjetivo()">Agregar regla</button>
@@ -89,7 +72,12 @@
             <div style="margin-top:15px;">
                 <table>
                     <thead>
-                        <tr><th>Desde</th><th>Hasta</th><th>Objetivo (kg)</th><th>Acción</th></tr>
+                        <tr>
+                            <th>Desde</th>
+                            <th>Hasta</th>
+                            <th>Objetivo (kg)</th>
+                            <th>Acción</th>
+                        </tr>
                     </thead>
                     <tbody id="tablaObjetivos"></tbody>
                 </table>
@@ -99,7 +87,7 @@
                     <span class="badge-config" id="estadoObjetivos">Sin objetivos cargados para este turno</span>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button type="button" class="btn-secundario" onclick="document.getElementById('maestroCard').classList.toggle('hidden'); cargarMaestro();">Configurar Maestros</button>
+                    <button type="button" class="btn-secundario" onclick="cargarMaestroDesdeExcel()">Sincronizar Maestro Excel</button>
                     <button type="button" class="btn-peligro" onclick="limpiarObjetivos()">Limpiar reglas</button>
                 </div>
             </div>
@@ -109,8 +97,8 @@
             <h3>Nuevo Registro</h3>
             <form id="form">
                 <input type="text" id="operador" readonly>
-                <select id="exportadora" required onchange="automatizarReglasPorExportadora()">
-                    <option value="">Seleccione Exportadora...</option>
+                <select id="exportadora" required onchange="actualizarObjetivosPorExportadora(); actualizarGraficoDesdeFiltro();">
+                    <option value="">Exportadora</option>
                     <option>Fruclem</option>
                     <option>SK Gyan</option>
                     <option>JHB</option>
@@ -118,13 +106,24 @@
                 </select>
                 <select id="categoria" required>
                     <option value="">Categoría</option>
-                    <option>Premium</option><option>Extra</option><option>Fancy</option><option>Choice</option><option>Granel</option><option>CEM</option>
+                    <option>Premium</option>
+                    <option>Extra</option>
+                    <option>Fancy</option>
+                    <option>Choice</option>
+                    <option>Granel</option>
+                    <option>CEM</option>
                 </select>
                 <select id="variedad" required onchange="actualizarGraficoDesdeFiltro()">
                     <option value="">Variedad</option>
-                    <option>Royal Gala</option><option>Red Delicious</option><option>Granny</option><option>Fuji</option><option>Pink Lady</option>
+                    <option>Royal Gala</option>
+                    <option>Red Delicious</option>
+                    <option>Granny</option>
+                    <option>Fuji</option>
+                    <option>Pink Lady</option>
                 </select>
-                <select id="salida" required></select>
+                <select id="salida" required>
+                    <option value="">Salida</option>
+                </select>
                 <input type="text" id="calibre" placeholder="Calibre" required>
                 <input type="text" id="lote" placeholder="Lote">
                 <input type="number" step="0.01" id="peso" placeholder="Peso (kg)" required>
@@ -140,7 +139,18 @@
             <h3>Registros</h3>
             <table>
                 <thead>
-                    <tr><th>Fecha</th><th>Hora</th><th>Usuario</th><th>Exportadora</th><th>Salida</th><th>Calibre</th><th>Categoría</th><th>Variedad</th><th>Lote</th><th>Peso</th></tr>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Usuario</th>
+                        <th>Exportadora</th>
+                        <th>Salida</th>
+                        <th>Calibre</th>
+                        <th>Categoría</th>
+                        <th>Variedad</th>
+                        <th>Lote</th>
+                        <th>Peso</th>
+                    </tr>
                 </thead>
                 <tbody id="tabla"></tbody>
             </table>
@@ -164,7 +174,7 @@
         let autoRefresh = null;
         let cargando = false;
         let reglasObjetivo = [];
-        let maestroConfig = []; // Para guardar lo que viene de Excel
+        let maestroExcel = [];
 
         for (let i = 1; i <= 41; i++) {
             let option = document.createElement("option");
@@ -172,42 +182,28 @@
             salidaSelect.appendChild(option);
         }
 
-        let operadorData = { operador: "", exportadora: "", variedad: "", lote: "" };
+        let operadorData = { operador: "" };
 
-        // --- FUNCIONES DEL MAESTRO (NUEVAS) ---
-        async function cargarMaestro() {
+        // --- LÓGICA DE MAESTRO EXCEL (SIN TOCAR EL RESTO) ---
+        async function cargarMaestroDesdeExcel() {
             try {
                 const res = await fetch(SCRIPT_URL + "?tipo=config_exportadoras");
                 const data = await res.json();
-                maestroConfig = data.slice(1);
-                const tbody = document.querySelector("#tablaMaestra tbody");
-                tbody.innerHTML = "";
-                maestroConfig.forEach(r => {
-                    tbody.innerHTML += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]} kg</td></tr>`;
-                });
-            } catch (e) { console.error("Error cargando maestro", e); }
+                maestroExcel = data.slice(1);
+                alert("Maestro de Excel sincronizado correctamente.");
+                actualizarObjetivosPorExportadora();
+            } catch (e) {
+                console.error("Error al cargar maestro", e);
+            }
         }
 
-        async function guardarConfigMaestra() {
-            const config = {
-                exportadora: document.getElementById("mExportadora").value,
-                desde: document.getElementById("mDesde").value,
-                hasta: document.getElementById("mHasta").value,
-                objetivo: document.getElementById("mObjetivo").value
-            };
-            const params = new URLSearchParams({ accion: "guardarConfigExportadora", config: JSON.stringify(config) });
-            await fetch(SCRIPT_URL, { method: "POST", body: params });
-            cargarMaestro();
-        }
-
-        async function automatizarReglasPorExportadora() {
+        async function actualizarObjetivosPorExportadora() {
             const expSel = document.getElementById("exportadora").value;
-            if (!expSel) return;
-            if (maestroConfig.length === 0) await cargarMaestro();
+            if (!expSel || maestroExcel.length === 0) return;
 
-            const reglasNuevas = maestroConfig.filter(r => String(r[0]).trim() === expSel);
-            if (reglasNuevas.length > 0) {
-                reglasObjetivo = reglasNuevas.map(r => ({
+            const reglasFiltradas = maestroExcel.filter(r => String(r[0]).trim() === expSel);
+            if (reglasFiltradas.length > 0) {
+                reglasObjetivo = reglasFiltradas.map(r => ({
                     desde: parseInt(r[1]),
                     hasta: parseInt(r[2]),
                     objetivo: normalizarNumero(r[3])
@@ -218,7 +214,7 @@
             }
         }
 
-        // --- TUS FUNCIONES ORIGINALES (SIN TOCAR) ---
+        // --- FUNCIONES ORIGINALES ---
         function normalizarNumero(valor) {
             if (valor === null || valor === undefined) return NaN;
             const limpio = String(valor).trim().replace(",", ".");
@@ -265,8 +261,16 @@
                 .then(data => {
                     if (!Array.isArray(data)) { reglasObjetivo = []; return; }
                     reglasObjetivo = data.filter((row, index) => row && row.length >= 3 && index > 0)
-                        .map(r => ({ desde: parseInt(r[0]), hasta: parseInt(r[1]), objetivo: normalizarNumero(r[2]) }));
+                        .map(r => ({ desde: parseInt(r[0], 10), hasta: parseInt(r[1], 10), objetivo: normalizarNumero(r[2]) }));
                 });
+        }
+
+        function actualizarEstadoObjetivos() {
+            const info = document.getElementById("infoObjetivos");
+            const texto = reglasObjetivo.map(r => `C${r.desde}-${r.hasta}=${r.objetivo}`).join(" | ");
+            info.innerText = "Objetivos: " + (texto || "sin definir");
+            const estado = document.getElementById("estadoObjetivos");
+            if(estado) estado.innerText = `${reglasObjetivo.length} regla(s) activa(s)`;
         }
 
         function renderTablaObjetivos() {
@@ -276,8 +280,7 @@
             reglasObjetivo.forEach((regla, index) => {
                 tbody.innerHTML += `<tr><td>${regla.desde}</td><td>${regla.hasta}</td><td>${regla.objetivo}</td><td><button type="button" class="btn-peligro" onclick="eliminarRegla(${index})">X</button></td></tr>`;
             });
-            const texto = reglasObjetivo.map(r => `C${r.desde}-${r.hasta}=${r.objetivo}`).join(" | ");
-            document.getElementById("infoObjetivos").innerText = "Objetivos: " + (texto || "sin definir");
+            actualizarEstadoObjetivos();
         }
 
         function agregarReglaObjetivo() {
@@ -308,36 +311,46 @@
         }
 
         function actualizarGrafico(registros) {
-            const ctx = document.getElementById("graficoPesos").getContext("2d");
+            const canvas = document.getElementById("graficoPesos");
+            const ctx = canvas.getContext("2d");
             let expSel = document.getElementById("exportadora").value;
             let varSel = document.getElementById("variedad").value;
 
             if (!expSel && registros.length > 0) {
-                const u = registros[registros.length - 1];
-                expSel = u[3]; varSel = u[7];
+                const ultimo = registros[registros.length - 1];
+                expSel = ultimo[3]; varSel = ultimo[7];
             }
 
-            const filtrados = registros.filter(r => r[3] === expSel && (varSel ? r[7] === varSel : true));
+            const filtrados = registros.filter(row => {
+                return String(row[3]).trim() === expSel && (varSel ? String(row[7]).trim() === varSel : true);
+            });
+
             const grupos = {};
-            filtrados.forEach(r => {
-                const c = r[5], p = normalizarNumero(r[9]);
-                if(!grupos[c]) grupos[c] = []; grupos[c].push(p);
+            filtrados.forEach(row => {
+                const cal = String(row[5]).trim();
+                const pes = normalizarNumero(row[9]);
+                if (!grupos[cal]) grupos[cal] = [];
+                grupos[cal].push(pes);
             });
 
             const datasets = [];
-            Object.keys(grupos).forEach((cal, i) => {
-                const color = generarColor(i);
+            Object.keys(grupos).sort((a,b)=>a-b).forEach((cal, idx) => {
+                const color = generarColor(idx);
                 datasets.push({ label: `C${cal}`, data: grupos[cal], borderColor: color, tension: 0.2 });
-                const obj = reglasObjetivo.find(r => parseInt(cal) >= r.desde && parseInt(cal) <= r.hasta);
-                if(obj) datasets.push({ label: `Obj`, data: Array(grupos[cal].length).fill(obj.objetivo), borderColor: color, borderDash:[5,5], pointRadius:0 });
+                const r = reglasObjetivo.find(o => parseInt(cal) >= o.desde && parseInt(cal) <= o.hasta);
+                if (r) datasets.push({ label: `Obj`, data: Array(grupos[cal].length).fill(r.objetivo), borderColor: color, borderDash:[5,5], pointRadius:0 });
             });
 
-            if(grafico) grafico.destroy();
-            grafico = new Chart(ctx, { type: 'line', data: { labels: Array.from({length:20}, (_,i)=>`Caja ${i+1}`), datasets }, options: { responsive: true, maintainAspectRatio: false }});
+            if (grafico) grafico.destroy();
+            grafico = new Chart(ctx, {
+                type: "line", data: { labels: Array.from({length: 25}, (_,i)=>i+1), datasets },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
         }
 
         function cargarRegistros() {
-            if (cargando) return; cargando = true;
+            if (cargando) return;
+            cargando = true;
             Promise.all([
                 fetch(SCRIPT_URL + "?t=" + new Date().getTime()).then(res => res.json()),
                 cargarObjetivosDesdeServidor()
@@ -346,38 +359,52 @@
                 actualizarTabla(filtrados);
                 actualizarGrafico(filtrados);
                 estadoSync.innerText = "Sincronizado: " + new Date().toLocaleTimeString();
-            }).finally(() => cargando = false);
+            }).finally(() => { cargando = false; });
+        }
+
+        function iniciarAutoRefresh() {
+            if (autoRefresh) clearInterval(autoRefresh);
+            autoRefresh = setInterval(() => { if (!cargando) cargarRegistros(); }, 10000);
+        }
+
+        function ingresarOperador() {
+            const n = document.getElementById("nombreOperador").value.trim();
+            if (document.getElementById("claveOperador").value === "fresh") {
+                operadorData.operador = n;
+                document.getElementById("operador").value = n;
+                document.getElementById("loginCard").classList.add("hidden");
+                document.getElementById("formCard").classList.remove("hidden");
+                document.getElementById("objetivosCard").classList.remove("hidden");
+                renderTablaObjetivos();
+                iniciarAutoRefresh();
+                cargarMaestroDesdeExcel();
+            } else { alert("Clave incorrecta"); }
         }
 
         function actualizarGraficoDesdeFiltro() { cargarRegistros(); }
         function limpiarFormulario() { document.getElementById("form").reset(); document.getElementById("operador").value = operadorData.operador; }
 
-        function ingresarOperador() {
-            if (document.getElementById("claveOperador").value === "fresh") {
-                operadorData.operador = document.getElementById("nombreOperador").value;
-                document.getElementById("operador").value = operadorData.operador;
-                document.getElementById("loginCard").classList.add("hidden");
-                ["formCard", "objetivosCard"].forEach(id => document.getElementById(id).classList.remove("hidden"));
-                renderTablaObjetivos();
-                cargarMaestro(); // Cargamos el maestro al entrar
-            } else { document.getElementById("msgLogin").innerText = "Clave incorrecta"; }
-        }
-
-        window.addEventListener("load", () => {
-            setInterval(cargarRegistros, 10000);
-            cargarRegistros();
-        });
-
         document.getElementById("form").addEventListener("submit", function (e) {
             e.preventDefault();
-            const data = new URLSearchParams(new FormData(this));
-            data.append("operador", operadorData.operador);
-            fetch(SCRIPT_URL, { method: "POST", body: data }).then(() => {
-                document.getElementById("msg").innerText = "Guardado!";
-                this.reset(); document.getElementById("operador").value = operadorData.operador;
-                setTimeout(() => document.getElementById("msg").innerText = "", 1500);
-                cargarRegistros();
-            });
+            const data = {
+                operador: operadorData.operador,
+                exportadora: document.getElementById("exportadora").value,
+                salida: document.getElementById("salida").value,
+                calibre: document.getElementById("calibre").value,
+                categoria: document.getElementById("categoria").value,
+                variedad: document.getElementById("variedad").value,
+                lote: document.getElementById("lote").value,
+                peso: document.getElementById("peso").value
+            };
+            fetch(SCRIPT_URL, { method: "POST", body: new URLSearchParams(data) })
+                .then(() => {
+                    document.getElementById("msg").innerText = "Guardado!";
+                    // SOLO LIMPIAMOS CALIBRE Y PESO PARA MANTENER EL RESTO FIJO
+                    document.getElementById("calibre").value = "";
+                    document.getElementById("peso").value = "";
+                    setTimeout(() => { document.getElementById("msg").innerText = ""; }, 1500);
+                    cargarRegistros();
+                });
         });
     </script>
 </body>
