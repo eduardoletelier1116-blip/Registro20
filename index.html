@@ -53,29 +53,15 @@
         <div class="card hidden" id="maestroCard">
             <h3 class="subtitulo">Configuración Maestro de Exportadoras</h3>
             <div class="row-3">
-                <div>
-                    <label><strong>Exportadora</strong></label>
-                    <input type="text" id="mExportadora" placeholder="Ej: Fruclem">
-                </div>
-                <div>
-                    <label><strong>Precalibre</strong></label>
-                    <input type="number" id="mDesde" placeholder="Ej: 72">
-                </div>
-                <div>
-                    <label><strong>Sobrecalibre</strong></label>
-                    <input type="number" id="mHasta" placeholder="Ej: 125">
-                </div>
-                <div>
-                    <label><strong>Peso Objetivo</strong></label>
-                    <input type="number" step="0.01" id="mObjetivo" placeholder="Ej: 19.1">
-                </div>
+                <input type="text" id="mExportadora" placeholder="Exportadora">
+                <input type="number" id="mDesde" placeholder="Precalibre">
+                <input type="number" id="mHasta" placeholder="Sobrecalibre">
+                <input type="number" step="0.01" id="mObjetivo" placeholder="Peso (kg)">
                 <button onclick="guardarConfigMaestra()">Guardar en Maestro</button>
             </div>
-            <div style="margin-top:15px; max-height: 200px; overflow-y: auto;">
+            <div style="margin-top:10px; max-height:150px; overflow-y:auto; border:1px solid #eee;">
                 <table id="tablaMaestra">
-                    <thead>
-                        <tr><th>Exportadora</th><th>Precalibre</th><th>Sobrecalibre</th><th>Peso</th></tr>
-                    </thead>
+                    <thead><tr><th>Exportadora</th><th>Precalibre</th><th>Sobrecalibre</th><th>Peso</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -85,16 +71,16 @@
             <h3 class="subtitulo">Objetivos del turno</h3>
             <div class="row-3">
                 <div>
-                    <label for="calibreDesde"><strong>Precalibre</strong></label>
-                    <input type="number" id="calibreDesde">
+                    <label for="calibreDesde"><strong>Calibre desde</strong></label>
+                    <input type="number" id="calibreDesde" placeholder="Ej: 72">
                 </div>
                 <div>
-                    <label for="calibreHasta"><strong>Sobrecalibre</strong></label>
-                    <input type="number" id="calibreHasta">
+                    <label for="calibreHasta"><strong>Calibre hasta</strong></label>
+                    <input type="number" id="calibreHasta" placeholder="Ej: 125">
                 </div>
                 <div>
                     <label for="pesoObjetivo"><strong>Peso objetivo (kg)</strong></label>
-                    <input type="text" id="pesoObjetivo">
+                    <input type="text" id="pesoObjetivo" placeholder="Ej: 19,1 o 19.1">
                 </div>
                 <div>
                     <button type="button" onclick="agregarReglaObjetivo()">Agregar regla</button>
@@ -103,14 +89,14 @@
             <div style="margin-top:15px;">
                 <table>
                     <thead>
-                        <tr><th>Precalibre</th><th>Sobrecalibre</th><th>Objetivo (kg)</th><th>Acción</th></tr>
+                        <tr><th>Desde</th><th>Hasta</th><th>Objetivo (kg)</th><th>Acción</th></tr>
                     </thead>
                     <tbody id="tablaObjetivos"></tbody>
                 </table>
             </div>
             <div class="row-2" style="margin-top:15px;">
                 <div>
-                    <span class="badge-config" id="estadoObjetivos">Sin objetivos cargados</span>
+                    <span class="badge-config" id="estadoObjetivos">Sin objetivos cargados para este turno</span>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="button" class="btn-secundario" onclick="document.getElementById('maestroCard').classList.toggle('hidden'); cargarMaestro();">Configurar Maestros</button>
@@ -123,9 +109,13 @@
             <h3>Nuevo Registro</h3>
             <form id="form">
                 <input type="text" id="operador" readonly>
-                <select id="exportadora" required onchange="actualizarGraficoDesdeFiltro(); automatizarReglasPorExportadora()">
+                <select id="exportadora" required onchange="automatizarReglasPorExportadora()">
                     <option value="">Seleccione Exportadora...</option>
-                    </select>
+                    <option>Fruclem</option>
+                    <option>SK Gyan</option>
+                    <option>JHB</option>
+                    <option>Talamaya</option>
+                </select>
                 <select id="categoria" required>
                     <option value="">Categoría</option>
                     <option>Premium</option><option>Extra</option><option>Fancy</option><option>Choice</option><option>Granel</option><option>CEM</option>
@@ -162,54 +152,40 @@
             <div class="chart-container">
                 <canvas id="graficoPesos"></canvas>
             </div>
-            <div class="info-objetivos" id="infoObjetivos">Objetivos activos: sin definir</div>
+            <div class="info-objetivos" id="infoObjetivos">Objetivos activos del turno: sin definir</div>
         </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhfpeYcebXnGYwSehV7vMRhUFRCah2qbIJfuhOrDCbVR_ZaRJwMEioyGZs8KqGXh1O/exec";
-        
-        // Variables de estado
-        let reglasObjetivo = [];
-        let maestroConfig = [];
+        const salidaSelect = document.getElementById("salida");
+        const estadoSync = document.getElementById("estadoSync");
         let grafico = null;
         let autoRefresh = null;
         let cargando = false;
-        let operadorData = { operador: "", exportadora: "", variedad: "", lote: "" };
+        let reglasObjetivo = [];
+        let maestroConfig = []; // Para guardar lo que viene de Excel
 
-        // Cargar Salidas (1-41)
-        const salidaSelect = document.getElementById("salida");
         for (let i = 1; i <= 41; i++) {
             let option = document.createElement("option");
             option.value = i; option.text = i;
             salidaSelect.appendChild(option);
         }
 
-        // --- LÓGICA DE MAESTROS DINÁMICOS ---
+        let operadorData = { operador: "", exportadora: "", variedad: "", lote: "" };
+
+        // --- FUNCIONES DEL MAESTRO (NUEVAS) ---
         async function cargarMaestro() {
             try {
                 const res = await fetch(SCRIPT_URL + "?tipo=config_exportadoras");
                 const data = await res.json();
                 maestroConfig = data.slice(1);
-                
-                const select = document.getElementById("exportadora");
                 const tbody = document.querySelector("#tablaMaestra tbody");
-                
-                // Actualizar Selector de Exportadoras
-                const valAnterior = select.value;
-                select.innerHTML = '<option value="">Seleccione Exportadora...</option>';
-                const nombresUnicos = [...new Set(maestroConfig.map(r => r[0]))];
-                nombresUnicos.forEach(nom => {
-                    select.innerHTML += `<option value="${nom}">${nom}</option>`;
-                });
-                select.value = valAnterior;
-
-                // Actualizar Tabla Visual del Maestro
                 tbody.innerHTML = "";
                 maestroConfig.forEach(r => {
-                    tbody.innerHTML += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]} kg</td></tr>`;
                 });
-            } catch (e) { console.error("Error cargando maestros", e); }
+            } catch (e) { console.error("Error cargando maestro", e); }
         }
 
         async function guardarConfigMaestra() {
@@ -219,41 +195,30 @@
                 hasta: document.getElementById("mHasta").value,
                 objetivo: document.getElementById("mObjetivo").value
             };
-            if(!config.exportadora || !config.desde || !config.objetivo) return alert("Complete los datos");
-
             const params = new URLSearchParams({ accion: "guardarConfigExportadora", config: JSON.stringify(config) });
             await fetch(SCRIPT_URL, { method: "POST", body: params });
-            
-            document.getElementById("mExportadora").value = "";
-            document.getElementById("mDesde").value = "";
-            document.getElementById("mHasta").value = "";
-            document.getElementById("mObjetivo").value = "";
-            
-            await cargarMaestro();
-            alert("Maestro actualizado exitosamente");
+            cargarMaestro();
         }
 
         async function automatizarReglasPorExportadora() {
             const expSel = document.getElementById("exportadora").value;
             if (!expSel) return;
-
             if (maestroConfig.length === 0) await cargarMaestro();
 
-            const reglasNuevas = maestroConfig.filter(r => r[0] === expSel);
+            const reglasNuevas = maestroConfig.filter(r => String(r[0]).trim() === expSel);
             if (reglasNuevas.length > 0) {
                 reglasObjetivo = reglasNuevas.map(r => ({
                     desde: parseInt(r[1]),
                     hasta: parseInt(r[2]),
-                    objetivo: parseFloat(String(r[3]).replace(',', '.'))
+                    objetivo: normalizarNumero(r[3])
                 }));
-
                 await guardarObjetivosEnServidor();
                 renderTablaObjetivos();
                 cargarRegistros();
             }
         }
 
-        // --- FUNCIONES ORIGINALES (MANTENIDAS) ---
+        // --- TUS FUNCIONES ORIGINALES (SIN TOCAR) ---
         function normalizarNumero(valor) {
             if (valor === null || valor === undefined) return NaN;
             const limpio = String(valor).trim().replace(",", ".");
@@ -295,25 +260,24 @@
         }
 
         function cargarObjetivosDesdeServidor() {
-            return fetch(SCRIPT_URL + "?tipo=objetivos&t=" + Date.now())
+            return fetch(SCRIPT_URL + "?tipo=objetivos&t=" + new Date().getTime())
                 .then(res => res.json())
                 .then(data => {
-                    if (!Array.isArray(data)) return;
-                    reglasObjetivo = data.filter((r, i) => i > 0 && r.length >= 3)
+                    if (!Array.isArray(data)) { reglasObjetivo = []; return; }
+                    reglasObjetivo = data.filter((row, index) => row && row.length >= 3 && index > 0)
                         .map(r => ({ desde: parseInt(r[0]), hasta: parseInt(r[1]), objetivo: normalizarNumero(r[2]) }));
-                    renderTablaObjetivos();
                 });
         }
 
         function renderTablaObjetivos() {
             const tbody = document.getElementById("tablaObjetivos");
+            if(!tbody) return;
             tbody.innerHTML = "";
-            reglasObjetivo.forEach((r, i) => {
-                tbody.innerHTML += `<tr><td>${r.desde}</td><td>${r.hasta}</td><td>${r.objetivo}</td><td><button class="btn-peligro" onclick="eliminarRegla(${i})">X</button></td></tr>`;
+            reglasObjetivo.forEach((regla, index) => {
+                tbody.innerHTML += `<tr><td>${regla.desde}</td><td>${regla.hasta}</td><td>${regla.objetivo}</td><td><button type="button" class="btn-peligro" onclick="eliminarRegla(${index})">X</button></td></tr>`;
             });
             const texto = reglasObjetivo.map(r => `C${r.desde}-${r.hasta}=${r.objetivo}`).join(" | ");
             document.getElementById("infoObjetivos").innerText = "Objetivos: " + (texto || "sin definir");
-            document.getElementById("estadoObjetivos").innerText = reglasObjetivo.length + " regla(s) activa(s)";
         }
 
         function agregarReglaObjetivo() {
@@ -345,37 +309,43 @@
 
         function actualizarGrafico(registros) {
             const ctx = document.getElementById("graficoPesos").getContext("2d");
-            const expSel = document.getElementById("exportadora").value;
-            const varSel = document.getElementById("variedad").value;
+            let expSel = document.getElementById("exportadora").value;
+            let varSel = document.getElementById("variedad").value;
 
-            if (!expSel) { if(grafico) grafico.destroy(); return; }
+            if (!expSel && registros.length > 0) {
+                const u = registros[registros.length - 1];
+                expSel = u[3]; varSel = u[7];
+            }
 
             const filtrados = registros.filter(r => r[3] === expSel && (varSel ? r[7] === varSel : true));
             const grupos = {};
             filtrados.forEach(r => {
-                const cal = r[5]; const pes = normalizarNumero(r[9]);
-                if(!grupos[cal]) grupos[cal] = []; grupos[cal].push(pes);
+                const c = r[5], p = normalizarNumero(r[9]);
+                if(!grupos[c]) grupos[c] = []; grupos[c].push(p);
             });
 
             const datasets = [];
-            Object.keys(grupos).sort((a,b)=>a-b).forEach((cal, i) => {
+            Object.keys(grupos).forEach((cal, i) => {
                 const color = generarColor(i);
-                datasets.push({ label: `C${cal} Real`, data: grupos[cal], borderColor: color, tension: 0.2 });
+                datasets.push({ label: `C${cal}`, data: grupos[cal], borderColor: color, tension: 0.2 });
                 const obj = reglasObjetivo.find(r => parseInt(cal) >= r.desde && parseInt(cal) <= r.hasta);
-                if(obj) datasets.push({ label: `C${cal} Obj`, data: Array(grupos[cal].length).fill(obj.objetivo), borderColor: color, borderDash:[5,5], pointRadius:0 });
+                if(obj) datasets.push({ label: `Obj`, data: Array(grupos[cal].length).fill(obj.objetivo), borderColor: color, borderDash:[5,5], pointRadius:0 });
             });
 
             if(grafico) grafico.destroy();
-            grafico = new Chart(ctx, { type: 'line', data: { labels: Array.from({length: 20}, (_,i)=>i+1), datasets }, options: { responsive: true, maintainAspectRatio: false }});
+            grafico = new Chart(ctx, { type: 'line', data: { labels: Array.from({length:20}, (_,i)=>`Caja ${i+1}`), datasets }, options: { responsive: true, maintainAspectRatio: false }});
         }
 
         function cargarRegistros() {
             if (cargando) return; cargando = true;
-            fetch(SCRIPT_URL + "?t=" + Date.now()).then(res => res.json()).then(data => {
+            Promise.all([
+                fetch(SCRIPT_URL + "?t=" + new Date().getTime()).then(res => res.json()),
+                cargarObjetivosDesdeServidor()
+            ]).then(([data]) => {
                 const filtrados = filtrarRegistrosPorDia(data);
                 actualizarTabla(filtrados);
                 actualizarGrafico(filtrados);
-                document.getElementById("estadoSync").innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+                estadoSync.innerText = "Sincronizado: " + new Date().toLocaleTimeString();
             }).finally(() => cargando = false);
         }
 
@@ -383,34 +353,28 @@
         function limpiarFormulario() { document.getElementById("form").reset(); document.getElementById("operador").value = operadorData.operador; }
 
         function ingresarOperador() {
-            const n = document.getElementById("nombreOperador").value;
             if (document.getElementById("claveOperador").value === "fresh") {
-                operadorData.operador = n;
-                document.getElementById("operador").value = n;
+                operadorData.operador = document.getElementById("nombreOperador").value;
+                document.getElementById("operador").value = operadorData.operador;
                 document.getElementById("loginCard").classList.add("hidden");
-                document.getElementById("formCard").classList.remove("hidden");
-                document.getElementById("objetivosCard").classList.remove("hidden");
-                cargarMaestro().then(cargarObjetivosDesdeServidor).then(cargarRegistros);
-                setInterval(cargarRegistros, 10000);
-            } else { alert("Clave incorrecta"); }
+                ["formCard", "objetivosCard"].forEach(id => document.getElementById(id).classList.remove("hidden"));
+                renderTablaObjetivos();
+                cargarMaestro(); // Cargamos el maestro al entrar
+            } else { document.getElementById("msgLogin").innerText = "Clave incorrecta"; }
         }
+
+        window.addEventListener("load", () => {
+            setInterval(cargarRegistros, 10000);
+            cargarRegistros();
+        });
 
         document.getElementById("form").addEventListener("submit", function (e) {
             e.preventDefault();
-            const data = {
-                operador: operadorData.operador,
-                exportadora: document.getElementById("exportadora").value,
-                salida: document.getElementById("salida").value,
-                calibre: document.getElementById("calibre").value,
-                categoria: document.getElementById("categoria").value,
-                variedad: document.getElementById("variedad").value,
-                lote: document.getElementById("lote").value,
-                peso: document.getElementById("peso").value
-            };
-            fetch(SCRIPT_URL, { method: "POST", body: new URLSearchParams(data) }).then(() => {
-                document.getElementById("msg").innerText = "¡Guardado!";
-                document.getElementById("calibre").value = "";
-                document.getElementById("peso").value = "";
+            const data = new URLSearchParams(new FormData(this));
+            data.append("operador", operadorData.operador);
+            fetch(SCRIPT_URL, { method: "POST", body: data }).then(() => {
+                document.getElementById("msg").innerText = "Guardado!";
+                this.reset(); document.getElementById("operador").value = operadorData.operador;
                 setTimeout(() => document.getElementById("msg").innerText = "", 1500);
                 cargarRegistros();
             });
