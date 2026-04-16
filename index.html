@@ -54,16 +54,16 @@
             <h3 class="subtitulo">Objetivos del turno</h3>
             <div class="row-3">
                 <div>
-                    <label for="calibreDesde"><strong>Calibre desde</strong></label>
+                    <label for="calibreDesde"><strong>Precalibre (Desde)</strong></label>
                     <input type="number" id="calibreDesde" placeholder="Ej: 72">
                 </div>
                 <div>
-                    <label for="calibreHasta"><strong>Calibre hasta</strong></label>
+                    <label for="calibreHasta"><strong>Sobrecalibre (Hasta)</strong></label>
                     <input type="number" id="calibreHasta" placeholder="Ej: 125">
                 </div>
                 <div>
                     <label for="pesoObjetivo"><strong>Peso objetivo (kg)</strong></label>
-                    <input type="text" id="pesoObjetivo" placeholder="Ej: 19,1 o 19.1">
+                    <input type="text" id="pesoObjetivo" placeholder="Ej: 19.1">
                 </div>
                 <div>
                     <button type="button" onclick="agregarReglaObjetivo()">Agregar regla</button>
@@ -73,8 +73,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Desde</th>
-                            <th>Hasta</th>
+                            <th>Precalibre</th>
+                            <th>Sobrecalibre</th>
                             <th>Objetivo (kg)</th>
                             <th>Acción</th>
                         </tr>
@@ -87,6 +87,7 @@
                     <span class="badge-config" id="estadoObjetivos">Sin objetivos cargados para este turno</span>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn-secundario" onclick="nuevaExportadora()">+ Nueva Exp.</button>
                     <button type="button" class="btn-secundario" onclick="cargarObjetivosEjemplo()">Cargar ejemplo</button>
                     <button type="button" class="btn-peligro" onclick="limpiarObjetivos()">Limpiar reglas</button>
                 </div>
@@ -97,8 +98,8 @@
             <h3>Nuevo Registro</h3>
             <form id="form">
                 <input type="text" id="operador" readonly>
-                <select id="exportadora" required onchange="cargarRegistros()">
-                    <option value="">Exportadora (Ver todo)</option>
+                <select id="exportadora" required onchange="actualizarGraficoDesdeFiltro(); automatizarReglasPorExportadora()">
+                    <option value="">Exportadora (Seleccionar para auto-cargar pesos)</option>
                     <option>Fruclem</option>
                     <option>SK Gyan</option>
                     <option>JHB</option>
@@ -113,7 +114,7 @@
                     <option>Granel</option>
                     <option>CEM</option>
                 </select>
-                <select id="variedad" required>
+                <select id="variedad" required onchange="actualizarGraficoDesdeFiltro()">
                     <option value="">Variedad</option>
                     <option>Royal Gala</option>
                     <option>Red Delicious</option>
@@ -127,8 +128,8 @@
                 <input type="text" id="calibre" placeholder="Calibre" required>
                 <input type="text" id="lote" placeholder="Lote">
                 <input type="number" step="0.01" id="peso" placeholder="Peso (kg)" required>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button type="submit" style="flex: 2;">Guardar Registro</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" style="flex: 3;">Guardar</button>
                     <button type="button" class="btn-secundario" style="flex: 1;" onclick="limpiarFormulario()">Limpiar</button>
                 </div>
                 <p id="msg" class="success"></p>
@@ -136,7 +137,7 @@
         </div>
 
         <div class="card" id="registrosCard">
-            <h3>Registros del Día</h3>
+            <h3>Registros</h3>
             <table>
                 <thead>
                     <tr>
@@ -158,7 +159,7 @@
         </div>
 
         <div class="card" id="graficoCard">
-            <h3>Seguimiento de pesos por calibre</h3>
+            <h3 id="tituloGrafico">Seguimiento de pesos por calibre</h3>
             <div class="chart-container">
                 <canvas id="graficoPesos"></canvas>
             </div>
@@ -167,7 +168,26 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxI1K7dwvkyPI6gZtPs6uWvhJjU_oXHKamvyj4UX6t24xnQCHW-gQVPdDHy9KpKoN0l/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkKbW5dlOgY66tCeAHVo4Ceqlsn5aH6Thkticjhw8RfUhXtdI4wscqfliLFmlkLXIp/exec";
+        
+        // --- CONFIGURACIÓN DE OBJETIVOS POR EXPORTADORA ---
+        const matrizObjetivos = {
+            "Fruclem": [
+                { desde: 72, hasta: 125, objetivo: 19.1 },
+                { desde: 150, hasta: 216, objetivo: 20.1 }
+            ],
+            "SK Gyan": [
+                { desde: 70, hasta: 110, objetivo: 18.5 },
+                { desde: 120, hasta: 198, objetivo: 19.0 }
+            ],
+            "JHB": [
+                { desde: 80, hasta: 135, objetivo: 19.1 }
+            ],
+            "Talamaya": [
+                { desde: 72, hasta: 216, objetivo: 19.5 }
+            ]
+        };
+
         const salidaSelect = document.getElementById("salida");
         const estadoSync = document.getElementById("estadoSync");
         let grafico = null;
@@ -196,15 +216,6 @@
                 const year = date.getFullYear();
                 return `${year}-${month}-${day}`;
             }
-            if (typeof date === "string" && date.includes("/")) {
-                const parts = date.split("/");
-                if (parts.length === 3) {
-                    const day = String(parts[0]).padStart(2, "0");
-                    const month = String(parts[1]).padStart(2, "0");
-                    const year = parts[2];
-                    return `${year}-${month}-${day}`;
-                }
-            }
             return date;
         }
 
@@ -213,10 +224,13 @@
             const fechaHoy = formatDate(hoy);
             return registros.filter(row => {
                 if (!row || row.length < 10) return false;
-                const fechaOriginal = row[0];
-                if (String(fechaOriginal).toLowerCase() === "fecha") return false;
-                const fechaRegistro = formatDate(fechaOriginal);
-                return fechaRegistro === fechaHoy;
+                if (String(row[0]).toLowerCase() === "fecha") return false;
+                let fReg = row[0];
+                if(fReg.includes("/")) {
+                    const p = fReg.split("/");
+                    fReg = `${p[2]}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}`;
+                }
+                return fReg === fechaHoy;
             });
         }
 
@@ -237,24 +251,25 @@
                     reglasObjetivo = data.filter((row, index) => row && row.length >= 3 && index > 0)
                         .map(r => ({ desde: parseInt(r[0], 10), hasta: parseInt(r[1], 10), objetivo: Number(normalizarNumero(r[2]).toFixed(2)) }))
                         .filter(r => !isNaN(r.desde) && !isNaN(r.hasta) && !isNaN(r.objetivo));
-                }).catch(err => { console.error("Error cargando objetivos:", err); reglasObjetivo = []; });
+                }).catch(err => { console.error("Error cargando objetivos:", err); });
         }
 
         function actualizarEstadoObjetivos() {
-            const estado = document.getElementById("estadoObjetivos");
             const info = document.getElementById("infoObjetivos");
+            const estado = document.getElementById("estadoObjetivos");
             if (!reglasObjetivo.length) {
-                estado.innerText = "Sin objetivos cargados para este turno";
-                info.innerText = "Objetivos activos del turno: sin definir";
+                if(estado) estado.innerText = "Sin objetivos cargados";
+                info.innerText = "Objetivos activos: sin definir";
                 return;
             }
-            estado.innerText = `${reglasObjetivo.length} regla(s) cargada(s) para este turno`;
-            const texto = reglasObjetivo.map(r => `calibres ${r.desde}-${r.hasta} = ${Number(r.objetivo).toFixed(2)} kg`).join(" | ");
-            info.innerText = "Objetivos activos del turno: " + texto;
+            if(estado) estado.innerText = `${reglasObjetivo.length} regla(s) activa(s)`;
+            const texto = reglasObjetivo.map(r => `C${r.desde}-${r.hasta}=${Number(r.objetivo).toFixed(2)}`).join(" | ");
+            info.innerText = "Objetivos: " + texto;
         }
 
         function renderTablaObjetivos() {
             const tbody = document.getElementById("tablaObjetivos");
+            if(!tbody) return;
             tbody.innerHTML = "";
             if (!reglasObjetivo.length) {
                 tbody.innerHTML = '<tr><td colspan="4">No hay reglas cargadas.</td></tr>';
@@ -262,45 +277,77 @@
                 return;
             }
             reglasObjetivo.sort((a, b) => a.desde - b.desde).forEach((regla, index) => {
-                tbody.innerHTML += `<tr><td>${regla.desde}</td><td>${regla.hasta}</td><td>${Number(regla.objetivo).toFixed(2)}</td><td><div class="acciones-regla"><button type="button" class="btn-peligro" onclick="eliminarRegla(${index})">Eliminar</button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>${regla.desde}</td><td>${regla.hasta}</td><td>${Number(regla.objetivo).toFixed(2)}</td><td><button type="button" class="btn-peligro" onclick="eliminarRegla(${index})">Eliminar</button></td></tr>`;
             });
             actualizarEstadoObjetivos();
+        }
+
+        // --- AUTOMATIZACIÓN SEGÚN EXPORTADORA ---
+        async function automatizarReglasPorExportadora() {
+            const expSel = document.getElementById("exportadora").value;
+            const reglasNuevas = matrizObjetivos[expSel];
+
+            if (reglasNuevas && reglasNuevas.length > 0) {
+                estadoSync.innerText = "Auto-configurando objetivos para " + expSel + "...";
+                
+                // Sobrescribimos las reglas locales
+                reglasObjetivo = reglasNuevas.map(r => ({
+                    desde: r.desde,
+                    hasta: r.hasta,
+                    objetivo: r.objetivo
+                }));
+
+                try {
+                    // Sincronizamos con Google Sheets
+                    await guardarObjetivosEnServidor();
+                    renderTablaObjetivos();
+                    cargarRegistros(); 
+                    estadoSync.innerText = "Objetivos aplicados para " + expSel;
+                } catch (error) {
+                    estadoSync.innerText = "Error al auto-cargar objetivos";
+                }
+            }
+        }
+
+        function nuevaExportadora() {
+            const nombre = prompt("Nombre de la nueva Exportadora:");
+            if (nombre) {
+                const select = document.getElementById("exportadora");
+                const option = document.createElement("option");
+                option.text = nombre;
+                option.value = nombre;
+                select.add(option);
+            }
         }
 
         function agregarReglaObjetivo() {
             const desde = parseInt(document.getElementById("calibreDesde").value, 10);
             const hasta = parseInt(document.getElementById("calibreHasta").value, 10);
             const objetivo = normalizarNumero(document.getElementById("pesoObjetivo").value);
-            if (isNaN(desde) || isNaN(hasta) || isNaN(objetivo)) { alert("Completa calibre desde, calibre hasta y peso objetivo."); return; }
-            if (desde > hasta) { alert("El calibre desde no puede ser mayor que el calibre hasta."); return; }
-            reglasObjetivo.push({ desde: desde, hasta: hasta, objetivo: Number(objetivo.toFixed(2)) });
-            guardarObjetivosEnServidor().then(resp => { if (resp.status !== "success") throw new Error(resp.message); return cargarObjetivosDesdeServidor(); })
-                .then(() => { renderTablaObjetivos(); cargarRegistros(); })
-                .catch(err => alert("Error al guardar objetivos."));
+            if (isNaN(desde) || isNaN(hasta) || isNaN(objetivo)) return;
+            reglasObjetivo.push({ desde, hasta, objetivo: Number(objetivo.toFixed(2)) });
+            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
             document.getElementById("calibreDesde").value = ""; document.getElementById("calibreHasta").value = ""; document.getElementById("pesoObjetivo").value = "";
         }
 
         function eliminarRegla(index) {
             reglasObjetivo.splice(index, 1);
-            guardarObjetivosEnServidor().then(() => cargarObjetivosDesdeServidor()).then(() => { renderTablaObjetivos(); cargarRegistros(); });
+            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
         }
 
         function limpiarObjetivos() {
             reglasObjetivo = [];
-            guardarObjetivosEnServidor().then(() => cargarObjetivosDesdeServidor()).then(() => { renderTablaObjetivos(); cargarRegistros(); });
+            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
         }
 
         function cargarObjetivosEjemplo() {
             reglasObjetivo = [{ desde: 72, hasta: 125, objetivo: 19.1 }, { desde: 150, hasta: 216, objetivo: 20.1 }];
-            guardarObjetivosEnServidor().then(() => cargarObjetivosDesdeServidor()).then(() => { renderTablaObjetivos(); cargarRegistros(); });
+            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
         }
 
         function obtenerObjetivoPorCalibre(calibre) {
-            const calibreNum = parseInt(calibre, 10);
-            if (isNaN(calibreNum)) return null;
-            for (const regla of reglasObjetivo) {
-                if (calibreNum >= regla.desde && calibreNum <= regla.hasta) return Number(normalizarNumero(regla.objetivo).toFixed(2));
-            }
+            const c = parseInt(calibre, 10);
+            for (const r of reglasObjetivo) { if (c >= r.desde && c <= r.hasta) return r.objetivo; }
             return null;
         }
 
@@ -308,7 +355,7 @@
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
             if (!registros || registros.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10">No hay registros para hoy.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10">No hay registros hoy.</td></tr>';
                 return;
             }
             [...registros].reverse().forEach(row => {
@@ -319,59 +366,60 @@
         function actualizarGrafico(registros) {
             const canvas = document.getElementById("graficoPesos");
             const ctx = canvas.getContext("2d");
-            const exportadoraSeleccionada = document.getElementById("exportadora").value;
             
-            actualizarEstadoObjetivos();
+            let expSel = document.getElementById("exportadora").value;
+            let varSel = document.getElementById("variedad").value;
+            
+            if ((!expSel || expSel === "") && registros.length > 0) {
+                const ultimo = registros[registros.length - 1];
+                expSel = String(ultimo[3]).trim();
+                varSel = String(ultimo[7]).trim();
+                document.getElementById("tituloGrafico").innerText = `Seguimiento: ${expSel} - ${varSel}`;
+            } else if (expSel !== "") {
+                document.getElementById("tituloGrafico").innerText = `Seguimiento: ${expSel} ${varSel ? '- ' + varSel : ''}`;
+            }
 
-            if (!registros || registros.length === 0) {
+            actualizarEstadoObjetivos();
+            
+            if (!registros || registros.length === 0 || !expSel) {
                 if (grafico) { grafico.destroy(); grafico = null; }
                 return;
             }
 
-            // FILTRO DE GRÁFICO: Solo mostrar datos de la exportadora seleccionada
-            const registrosFiltrados = registros.filter(row => {
-                if (!exportadoraSeleccionada) return true; // Si no hay nada seleccionado, muestra todo el día
-                return String(row[3]).trim() === exportadoraSeleccionada;
+            const filtrados = registros.filter(row => {
+                const matchExp = String(row[3]).trim() === expSel;
+                const matchVar = varSel ? String(row[7]).trim() === varSel : true;
+                return matchExp && matchVar;
+            });
+            
+            const grupos = {};
+            filtrados.forEach(row => {
+                const cal = String(row[5]).trim();
+                const pes = normalizarNumero(row[9]);
+                if (!cal || isNaN(pes)) return;
+                if (!grupos[cal]) grupos[cal] = [];
+                grupos[cal].push(pes);
             });
 
-            const gruposPorCalibre = {};
-            registrosFiltrados.forEach(row => {
-                const calibre = String(row[5]).trim();
-                const peso = normalizarNumero(row[9]);
-                if (!calibre || isNaN(peso)) return;
-                if (!gruposPorCalibre[calibre]) gruposPorCalibre[calibre] = [];
-                gruposPorCalibre[calibre].push(peso);
-            });
-
-            const maxCajas = Math.max(...Object.values(gruposPorCalibre).map(arr => arr.length), 0);
+            const maxCajas = Math.max(...Object.values(grupos).map(a => a.length), 0);
             const labels = Array.from({ length: maxCajas }, (_, i) => `Caja ${i + 1}`);
-            const calibresUnicos = Object.keys(gruposPorCalibre).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+            const calUnicos = Object.keys(grupos).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+            
             const datasets = [];
-
-            calibresUnicos.forEach((calibre, index) => {
-                const colorBase = generarColor(index);
-                const pesos = gruposPorCalibre[calibre];
-                datasets.push({
-                    label: `Calibre ${calibre} - Real`,
-                    data: pesos, borderColor: colorBase, backgroundColor: colorBase, tension: 0.25, fill: false, pointRadius: 4, pointHoverRadius: 6, spanGaps: false, borderWidth: 2
-                });
-                const objetivo = obtenerObjetivoPorCalibre(calibre);
-                if (objetivo !== null) {
-                    datasets.push({
-                        label: `Calibre ${calibre} - Objetivo (${Number(objetivo).toFixed(2)} kg)`,
-                        data: Array(pesos.length).fill(Number(objetivo.toFixed(2))), borderColor: colorBase, backgroundColor: colorBase, borderDash: [8, 6], tension: 0, fill: false, pointRadius: 0, pointHoverRadius: 0, spanGaps: false, borderWidth: 2
-                    });
+            calUnicos.forEach((cal, idx) => {
+                const color = generarColor(idx);
+                datasets.push({ label: `C ${cal} Real`, data: grupos[cal], borderColor: color, backgroundColor: color, tension: 0.2, fill: false, pointRadius: 4 });
+                
+                const obj = obtenerObjetivoPorCalibre(cal);
+                if (obj !== null) {
+                    datasets.push({ label: `C ${cal} Obj (${obj})`, data: Array(grupos[cal].length).fill(obj), borderColor: color, borderDash: [6, 4], pointRadius: 0, fill: false });
                 }
             });
 
             if (grafico) grafico.destroy();
             grafico = new Chart(ctx, {
-                type: "line", data: { labels: labels, datasets: datasets },
-                options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
-                    plugins: { legend: { position: "top" } },
-                    scales: { x: { title: { display: true, text: "Número de caja" } }, y: { title: { display: true, text: "Peso (kg)" } } }
-                }
+                type: "line", data: { labels, datasets },
+                options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { beginAtZero: false } } }
             });
         }
 
@@ -382,45 +430,44 @@
                 fetch(SCRIPT_URL + "?t=" + new Date().getTime()).then(res => res.json()),
                 cargarObjetivosDesdeServidor()
             ]).then(([data]) => {
-                const registrosFiltrados = filtrarRegistrosPorDia(data);
-                actualizarTabla(registrosFiltrados);
-                actualizarGrafico(registrosFiltrados);
-                estadoSync.innerText = "Última actualización: " + new Date().toLocaleTimeString("es-CL");
+                const filtrados = filtrarRegistrosPorDia(data);
+                actualizarTabla(filtrados);
+                actualizarGrafico(filtrados);
+                estadoSync.innerText = "Sincronizado: " + new Date().toLocaleTimeString();
             }).catch(err => {
-                estadoSync.innerText = "Error al sincronizar";
+                estadoSync.innerText = "Error de conexión";
             }).finally(() => { cargando = false; });
+        }
+
+        function actualizarGraficoDesdeFiltro() {
+            cargarRegistros();
         }
 
         function limpiarFormulario() {
             document.getElementById("form").reset();
             document.getElementById("operador").value = operadorData.operador;
-            // Al resetear, el gráfico volverá a mostrar todo o se vaciará según el filtro
-            cargarRegistros();
         }
 
         function iniciarAutoRefresh() {
             if (autoRefresh) clearInterval(autoRefresh);
-            autoRefresh = setInterval(cargarRegistros, 5000);
+            autoRefresh = setInterval(() => { if (!cargando) cargarRegistros(); }, 5000);
         }
 
-        window.addEventListener("load", function () {
-            const exp = localStorage.getItem("exportadora");
-            if (exp) document.getElementById("exportadora").value = exp;
-            cargarRegistros();
+        window.addEventListener("load", () => {
             iniciarAutoRefresh();
+            cargarRegistros(); 
         });
 
         function ingresarOperador() {
-            const nombre = document.getElementById("nombreOperador").value.trim();
-            const clave = document.getElementById("claveOperador").value.trim();
-            if (clave === "fresh") {
-                operadorData.operador = nombre;
-                document.getElementById("operador").value = nombre;
+            const n = document.getElementById("nombreOperador").value.trim();
+            const c = document.getElementById("claveOperador").value.trim();
+            if (c === "fresh") {
+                operadorData.operador = n;
+                document.getElementById("operador").value = n;
                 document.getElementById("loginCard").classList.add("hidden");
-                document.getElementById("registrosCard").classList.remove("hidden");
                 document.getElementById("formCard").classList.remove("hidden");
                 document.getElementById("objetivosCard").classList.remove("hidden");
-                cargarRegistros();
+                renderTablaObjetivos();
             } else {
                 document.getElementById("msgLogin").innerText = "Clave incorrecta";
             }
@@ -441,8 +488,7 @@
             fetch(SCRIPT_URL, { method: "POST", body: new URLSearchParams(data) })
                 .then(res => res.json())
                 .then(() => {
-                    document.getElementById("msg").innerText = "Guardado correctamente";
-                    localStorage.setItem("exportadora", data.exportadora);
+                    document.getElementById("msg").innerText = "Guardado!";
                     document.getElementById("calibre").value = "";
                     document.getElementById("peso").value = "";
                     setTimeout(() => { document.getElementById("msg").innerText = ""; }, 1500);
