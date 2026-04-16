@@ -50,20 +50,51 @@
             <p id="msgLogin" style="color:red;"></p>
         </div>
 
+        <div class="card hidden" id="maestroCard">
+            <h3 class="subtitulo">Configuración Maestro de Exportadoras</h3>
+            <div class="row-3">
+                <div>
+                    <label><strong>Exportadora</strong></label>
+                    <input type="text" id="mExportadora" placeholder="Ej: Fruclem">
+                </div>
+                <div>
+                    <label><strong>Precalibre</strong></label>
+                    <input type="number" id="mDesde" placeholder="Ej: 72">
+                </div>
+                <div>
+                    <label><strong>Sobrecalibre</strong></label>
+                    <input type="number" id="mHasta" placeholder="Ej: 125">
+                </div>
+                <div>
+                    <label><strong>Peso Objetivo</strong></label>
+                    <input type="number" step="0.01" id="mObjetivo" placeholder="Ej: 19.1">
+                </div>
+                <button onclick="guardarConfigMaestra()">Guardar en Maestro</button>
+            </div>
+            <div style="margin-top:15px; max-height: 200px; overflow-y: auto;">
+                <table id="tablaMaestra">
+                    <thead>
+                        <tr><th>Exportadora</th><th>Precalibre</th><th>Sobrecalibre</th><th>Peso</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="card hidden" id="objetivosCard">
             <h3 class="subtitulo">Objetivos del turno</h3>
             <div class="row-3">
                 <div>
-                    <label for="calibreDesde"><strong>Precalibre (Desde)</strong></label>
-                    <input type="number" id="calibreDesde" placeholder="Ej: 72">
+                    <label for="calibreDesde"><strong>Precalibre</strong></label>
+                    <input type="number" id="calibreDesde">
                 </div>
                 <div>
-                    <label for="calibreHasta"><strong>Sobrecalibre (Hasta)</strong></label>
-                    <input type="number" id="calibreHasta" placeholder="Ej: 125">
+                    <label for="calibreHasta"><strong>Sobrecalibre</strong></label>
+                    <input type="number" id="calibreHasta">
                 </div>
                 <div>
                     <label for="pesoObjetivo"><strong>Peso objetivo (kg)</strong></label>
-                    <input type="text" id="pesoObjetivo" placeholder="Ej: 19.1">
+                    <input type="text" id="pesoObjetivo">
                 </div>
                 <div>
                     <button type="button" onclick="agregarReglaObjetivo()">Agregar regla</button>
@@ -72,23 +103,17 @@
             <div style="margin-top:15px;">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Precalibre</th>
-                            <th>Sobrecalibre</th>
-                            <th>Objetivo (kg)</th>
-                            <th>Acción</th>
-                        </tr>
+                        <tr><th>Precalibre</th><th>Sobrecalibre</th><th>Objetivo (kg)</th><th>Acción</th></tr>
                     </thead>
                     <tbody id="tablaObjetivos"></tbody>
                 </table>
             </div>
             <div class="row-2" style="margin-top:15px;">
                 <div>
-                    <span class="badge-config" id="estadoObjetivos">Sin objetivos cargados para este turno</span>
+                    <span class="badge-config" id="estadoObjetivos">Sin objetivos cargados</span>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button type="button" class="btn-secundario" onclick="nuevaExportadora()">+ Nueva Exp.</button>
-                    <button type="button" class="btn-secundario" onclick="cargarObjetivosEjemplo()">Cargar ejemplo</button>
+                    <button type="button" class="btn-secundario" onclick="document.getElementById('maestroCard').classList.toggle('hidden'); cargarMaestro();">Configurar Maestros</button>
                     <button type="button" class="btn-peligro" onclick="limpiarObjetivos()">Limpiar reglas</button>
                 </div>
             </div>
@@ -99,32 +124,17 @@
             <form id="form">
                 <input type="text" id="operador" readonly>
                 <select id="exportadora" required onchange="actualizarGraficoDesdeFiltro(); automatizarReglasPorExportadora()">
-                    <option value="">Exportadora (Seleccionar para auto-cargar pesos)</option>
-                    <option>Fruclem</option>
-                    <option>SK Gyan</option>
-                    <option>JHB</option>
-                    <option>Talamaya</option>
-                </select>
+                    <option value="">Seleccione Exportadora...</option>
+                    </select>
                 <select id="categoria" required>
                     <option value="">Categoría</option>
-                    <option>Premium</option>
-                    <option>Extra</option>
-                    <option>Fancy</option>
-                    <option>Choice</option>
-                    <option>Granel</option>
-                    <option>CEM</option>
+                    <option>Premium</option><option>Extra</option><option>Fancy</option><option>Choice</option><option>Granel</option><option>CEM</option>
                 </select>
                 <select id="variedad" required onchange="actualizarGraficoDesdeFiltro()">
                     <option value="">Variedad</option>
-                    <option>Royal Gala</option>
-                    <option>Red Delicious</option>
-                    <option>Granny</option>
-                    <option>Fuji</option>
-                    <option>Pink Lady</option>
+                    <option>Royal Gala</option><option>Red Delicious</option><option>Granny</option><option>Fuji</option><option>Pink Lady</option>
                 </select>
-                <select id="salida" required>
-                    <option value="">Salida</option>
-                </select>
+                <select id="salida" required></select>
                 <input type="text" id="calibre" placeholder="Calibre" required>
                 <input type="text" id="lote" placeholder="Lote">
                 <input type="number" step="0.01" id="peso" placeholder="Peso (kg)" required>
@@ -140,18 +150,7 @@
             <h3>Registros</h3>
             <table>
                 <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Usuario</th>
-                        <th>Exportadora</th>
-                        <th>Salida</th>
-                        <th>Calibre</th>
-                        <th>Categoría</th>
-                        <th>Variedad</th>
-                        <th>Lote</th>
-                        <th>Peso</th>
-                    </tr>
+                    <tr><th>Fecha</th><th>Hora</th><th>Usuario</th><th>Exportadora</th><th>Salida</th><th>Calibre</th><th>Categoría</th><th>Variedad</th><th>Lote</th><th>Peso</th></tr>
                 </thead>
                 <tbody id="tabla"></tbody>
             </table>
@@ -163,46 +162,98 @@
             <div class="chart-container">
                 <canvas id="graficoPesos"></canvas>
             </div>
-            <div class="info-objetivos" id="infoObjetivos">Objetivos activos del turno: sin definir</div>
+            <div class="info-objetivos" id="infoObjetivos">Objetivos activos: sin definir</div>
         </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkKbW5dlOgY66tCeAHVo4Ceqlsn5aH6Thkticjhw8RfUhXtdI4wscqfliLFmlkLXIp/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhfpeYcebXnGYwSehV7vMRhUFRCah2qbIJfuhOrDCbVR_ZaRJwMEioyGZs8KqGXh1O/exec";
         
-        // --- CONFIGURACIÓN DE OBJETIVOS POR EXPORTADORA ---
-        const matrizObjetivos = {
-            "Fruclem": [
-                { desde: 72, hasta: 125, objetivo: 19.1 },
-                { desde: 150, hasta: 216, objetivo: 20.1 }
-            ],
-            "SK Gyan": [
-                { desde: 70, hasta: 110, objetivo: 18.5 },
-                { desde: 120, hasta: 198, objetivo: 19.0 }
-            ],
-            "JHB": [
-                { desde: 80, hasta: 135, objetivo: 19.1 }
-            ],
-            "Talamaya": [
-                { desde: 72, hasta: 216, objetivo: 19.5 }
-            ]
-        };
-
-        const salidaSelect = document.getElementById("salida");
-        const estadoSync = document.getElementById("estadoSync");
+        // Variables de estado
+        let reglasObjetivo = [];
+        let maestroConfig = [];
         let grafico = null;
         let autoRefresh = null;
         let cargando = false;
-        let reglasObjetivo = [];
+        let operadorData = { operador: "", exportadora: "", variedad: "", lote: "" };
 
+        // Cargar Salidas (1-41)
+        const salidaSelect = document.getElementById("salida");
         for (let i = 1; i <= 41; i++) {
             let option = document.createElement("option");
             option.value = i; option.text = i;
             salidaSelect.appendChild(option);
         }
 
-        let operadorData = { operador: "", exportadora: "", variedad: "", lote: "" };
+        // --- LÓGICA DE MAESTROS DINÁMICOS ---
+        async function cargarMaestro() {
+            try {
+                const res = await fetch(SCRIPT_URL + "?tipo=config_exportadoras");
+                const data = await res.json();
+                maestroConfig = data.slice(1);
+                
+                const select = document.getElementById("exportadora");
+                const tbody = document.querySelector("#tablaMaestra tbody");
+                
+                // Actualizar Selector de Exportadoras
+                const valAnterior = select.value;
+                select.innerHTML = '<option value="">Seleccione Exportadora...</option>';
+                const nombresUnicos = [...new Set(maestroConfig.map(r => r[0]))];
+                nombresUnicos.forEach(nom => {
+                    select.innerHTML += `<option value="${nom}">${nom}</option>`;
+                });
+                select.value = valAnterior;
 
+                // Actualizar Tabla Visual del Maestro
+                tbody.innerHTML = "";
+                maestroConfig.forEach(r => {
+                    tbody.innerHTML += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`;
+                });
+            } catch (e) { console.error("Error cargando maestros", e); }
+        }
+
+        async function guardarConfigMaestra() {
+            const config = {
+                exportadora: document.getElementById("mExportadora").value,
+                desde: document.getElementById("mDesde").value,
+                hasta: document.getElementById("mHasta").value,
+                objetivo: document.getElementById("mObjetivo").value
+            };
+            if(!config.exportadora || !config.desde || !config.objetivo) return alert("Complete los datos");
+
+            const params = new URLSearchParams({ accion: "guardarConfigExportadora", config: JSON.stringify(config) });
+            await fetch(SCRIPT_URL, { method: "POST", body: params });
+            
+            document.getElementById("mExportadora").value = "";
+            document.getElementById("mDesde").value = "";
+            document.getElementById("mHasta").value = "";
+            document.getElementById("mObjetivo").value = "";
+            
+            await cargarMaestro();
+            alert("Maestro actualizado exitosamente");
+        }
+
+        async function automatizarReglasPorExportadora() {
+            const expSel = document.getElementById("exportadora").value;
+            if (!expSel) return;
+
+            if (maestroConfig.length === 0) await cargarMaestro();
+
+            const reglasNuevas = maestroConfig.filter(r => r[0] === expSel);
+            if (reglasNuevas.length > 0) {
+                reglasObjetivo = reglasNuevas.map(r => ({
+                    desde: parseInt(r[1]),
+                    hasta: parseInt(r[2]),
+                    objetivo: parseFloat(String(r[3]).replace(',', '.'))
+                }));
+
+                await guardarObjetivosEnServidor();
+                renderTablaObjetivos();
+                cargarRegistros();
+            }
+        }
+
+        // --- FUNCIONES ORIGINALES (MANTENIDAS) ---
         function normalizarNumero(valor) {
             if (valor === null || valor === undefined) return NaN;
             const limpio = String(valor).trim().replace(",", ".");
@@ -235,7 +286,7 @@
         }
 
         function generarColor(index) {
-            const colores = ["#1e3c72", "#2a5298", "#4caf50", "#ff9800", "#e91e63", "#9c27b0", "#009688", "#f44336", "#795548", "#607d8b", "#3f51b5", "#8bc34a", "#ffc107", "#673ab7", "#00bcd4"];
+            const colores = ["#1e3c72", "#2a5298", "#4caf50", "#ff9800", "#e91e63", "#9c27b0", "#009688", "#f44336", "#795548", "#607d8b"];
             return colores[index % colores.length];
         }
 
@@ -244,233 +295,104 @@
         }
 
         function cargarObjetivosDesdeServidor() {
-            return fetch(SCRIPT_URL + "?tipo=objetivos&t=" + new Date().getTime())
+            return fetch(SCRIPT_URL + "?tipo=objetivos&t=" + Date.now())
                 .then(res => res.json())
                 .then(data => {
-                    if (!Array.isArray(data)) { reglasObjetivo = []; return; }
-                    reglasObjetivo = data.filter((row, index) => row && row.length >= 3 && index > 0)
-                        .map(r => ({ desde: parseInt(r[0], 10), hasta: parseInt(r[1], 10), objetivo: Number(normalizarNumero(r[2]).toFixed(2)) }))
-                        .filter(r => !isNaN(r.desde) && !isNaN(r.hasta) && !isNaN(r.objetivo));
-                }).catch(err => { console.error("Error cargando objetivos:", err); });
-        }
-
-        function actualizarEstadoObjetivos() {
-            const info = document.getElementById("infoObjetivos");
-            const estado = document.getElementById("estadoObjetivos");
-            if (!reglasObjetivo.length) {
-                if(estado) estado.innerText = "Sin objetivos cargados";
-                info.innerText = "Objetivos activos: sin definir";
-                return;
-            }
-            if(estado) estado.innerText = `${reglasObjetivo.length} regla(s) activa(s)`;
-            const texto = reglasObjetivo.map(r => `C${r.desde}-${r.hasta}=${Number(r.objetivo).toFixed(2)}`).join(" | ");
-            info.innerText = "Objetivos: " + texto;
+                    if (!Array.isArray(data)) return;
+                    reglasObjetivo = data.filter((r, i) => i > 0 && r.length >= 3)
+                        .map(r => ({ desde: parseInt(r[0]), hasta: parseInt(r[1]), objetivo: normalizarNumero(r[2]) }));
+                    renderTablaObjetivos();
+                });
         }
 
         function renderTablaObjetivos() {
             const tbody = document.getElementById("tablaObjetivos");
-            if(!tbody) return;
             tbody.innerHTML = "";
-            if (!reglasObjetivo.length) {
-                tbody.innerHTML = '<tr><td colspan="4">No hay reglas cargadas.</td></tr>';
-                actualizarEstadoObjetivos();
-                return;
-            }
-            reglasObjetivo.sort((a, b) => a.desde - b.desde).forEach((regla, index) => {
-                tbody.innerHTML += `<tr><td>${regla.desde}</td><td>${regla.hasta}</td><td>${Number(regla.objetivo).toFixed(2)}</td><td><button type="button" class="btn-peligro" onclick="eliminarRegla(${index})">Eliminar</button></td></tr>`;
+            reglasObjetivo.forEach((r, i) => {
+                tbody.innerHTML += `<tr><td>${r.desde}</td><td>${r.hasta}</td><td>${r.objetivo}</td><td><button class="btn-peligro" onclick="eliminarRegla(${i})">X</button></td></tr>`;
             });
-            actualizarEstadoObjetivos();
-        }
-
-        // --- AUTOMATIZACIÓN SEGÚN EXPORTADORA ---
-        async function automatizarReglasPorExportadora() {
-            const expSel = document.getElementById("exportadora").value;
-            const reglasNuevas = matrizObjetivos[expSel];
-
-            if (reglasNuevas && reglasNuevas.length > 0) {
-                estadoSync.innerText = "Auto-configurando objetivos para " + expSel + "...";
-                
-                // Sobrescribimos las reglas locales
-                reglasObjetivo = reglasNuevas.map(r => ({
-                    desde: r.desde,
-                    hasta: r.hasta,
-                    objetivo: r.objetivo
-                }));
-
-                try {
-                    // Sincronizamos con Google Sheets
-                    await guardarObjetivosEnServidor();
-                    renderTablaObjetivos();
-                    cargarRegistros(); 
-                    estadoSync.innerText = "Objetivos aplicados para " + expSel;
-                } catch (error) {
-                    estadoSync.innerText = "Error al auto-cargar objetivos";
-                }
-            }
-        }
-
-        function nuevaExportadora() {
-            const nombre = prompt("Nombre de la nueva Exportadora:");
-            if (nombre) {
-                const select = document.getElementById("exportadora");
-                const option = document.createElement("option");
-                option.text = nombre;
-                option.value = nombre;
-                select.add(option);
-            }
+            const texto = reglasObjetivo.map(r => `C${r.desde}-${r.hasta}=${r.objetivo}`).join(" | ");
+            document.getElementById("infoObjetivos").innerText = "Objetivos: " + (texto || "sin definir");
+            document.getElementById("estadoObjetivos").innerText = reglasObjetivo.length + " regla(s) activa(s)";
         }
 
         function agregarReglaObjetivo() {
-            const desde = parseInt(document.getElementById("calibreDesde").value, 10);
-            const hasta = parseInt(document.getElementById("calibreHasta").value, 10);
+            const desde = parseInt(document.getElementById("calibreDesde").value);
+            const hasta = parseInt(document.getElementById("calibreHasta").value);
             const objetivo = normalizarNumero(document.getElementById("pesoObjetivo").value);
-            if (isNaN(desde) || isNaN(hasta) || isNaN(objetivo)) return;
-            reglasObjetivo.push({ desde, hasta, objetivo: Number(objetivo.toFixed(2)) });
-            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
-            document.getElementById("calibreDesde").value = ""; document.getElementById("calibreHasta").value = ""; document.getElementById("pesoObjetivo").value = "";
+            if (isNaN(desde) || isNaN(objetivo)) return;
+            reglasObjetivo.push({ desde, hasta, objetivo });
+            guardarObjetivosEnServidor().then(() => renderTablaObjetivos());
         }
 
         function eliminarRegla(index) {
             reglasObjetivo.splice(index, 1);
-            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
+            guardarObjetivosEnServidor().then(() => renderTablaObjetivos());
         }
 
         function limpiarObjetivos() {
             reglasObjetivo = [];
-            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
-        }
-
-        function cargarObjetivosEjemplo() {
-            reglasObjetivo = [{ desde: 72, hasta: 125, objetivo: 19.1 }, { desde: 150, hasta: 216, objetivo: 20.1 }];
-            guardarObjetivosEnServidor().then(() => { renderTablaObjetivos(); cargarRegistros(); });
-        }
-
-        function obtenerObjetivoPorCalibre(calibre) {
-            const c = parseInt(calibre, 10);
-            for (const r of reglasObjetivo) { if (c >= r.desde && c <= r.hasta) return r.objetivo; }
-            return null;
+            guardarObjetivosEnServidor().then(() => renderTablaObjetivos());
         }
 
         function actualizarTabla(registros) {
             const tbody = document.getElementById("tabla");
             tbody.innerHTML = "";
-            if (!registros || registros.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10">No hay registros hoy.</td></tr>';
-                return;
-            }
             [...registros].reverse().forEach(row => {
                 tbody.innerHTML += `<tr><td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td>${row[6]}</td><td>${row[7]}</td><td>${row[8]}</td><td>${row[9]}</td></tr>`;
             });
         }
 
         function actualizarGrafico(registros) {
-            const canvas = document.getElementById("graficoPesos");
-            const ctx = canvas.getContext("2d");
-            
-            let expSel = document.getElementById("exportadora").value;
-            let varSel = document.getElementById("variedad").value;
-            
-            if ((!expSel || expSel === "") && registros.length > 0) {
-                const ultimo = registros[registros.length - 1];
-                expSel = String(ultimo[3]).trim();
-                varSel = String(ultimo[7]).trim();
-                document.getElementById("tituloGrafico").innerText = `Seguimiento: ${expSel} - ${varSel}`;
-            } else if (expSel !== "") {
-                document.getElementById("tituloGrafico").innerText = `Seguimiento: ${expSel} ${varSel ? '- ' + varSel : ''}`;
-            }
+            const ctx = document.getElementById("graficoPesos").getContext("2d");
+            const expSel = document.getElementById("exportadora").value;
+            const varSel = document.getElementById("variedad").value;
 
-            actualizarEstadoObjetivos();
-            
-            if (!registros || registros.length === 0 || !expSel) {
-                if (grafico) { grafico.destroy(); grafico = null; }
-                return;
-            }
+            if (!expSel) { if(grafico) grafico.destroy(); return; }
 
-            const filtrados = registros.filter(row => {
-                const matchExp = String(row[3]).trim() === expSel;
-                const matchVar = varSel ? String(row[7]).trim() === varSel : true;
-                return matchExp && matchVar;
-            });
-            
+            const filtrados = registros.filter(r => r[3] === expSel && (varSel ? r[7] === varSel : true));
             const grupos = {};
-            filtrados.forEach(row => {
-                const cal = String(row[5]).trim();
-                const pes = normalizarNumero(row[9]);
-                if (!cal || isNaN(pes)) return;
-                if (!grupos[cal]) grupos[cal] = [];
-                grupos[cal].push(pes);
+            filtrados.forEach(r => {
+                const cal = r[5]; const pes = normalizarNumero(r[9]);
+                if(!grupos[cal]) grupos[cal] = []; grupos[cal].push(pes);
             });
 
-            const maxCajas = Math.max(...Object.values(grupos).map(a => a.length), 0);
-            const labels = Array.from({ length: maxCajas }, (_, i) => `Caja ${i + 1}`);
-            const calUnicos = Object.keys(grupos).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-            
             const datasets = [];
-            calUnicos.forEach((cal, idx) => {
-                const color = generarColor(idx);
-                datasets.push({ label: `C ${cal} Real`, data: grupos[cal], borderColor: color, backgroundColor: color, tension: 0.2, fill: false, pointRadius: 4 });
-                
-                const obj = obtenerObjetivoPorCalibre(cal);
-                if (obj !== null) {
-                    datasets.push({ label: `C ${cal} Obj (${obj})`, data: Array(grupos[cal].length).fill(obj), borderColor: color, borderDash: [6, 4], pointRadius: 0, fill: false });
-                }
+            Object.keys(grupos).sort((a,b)=>a-b).forEach((cal, i) => {
+                const color = generarColor(i);
+                datasets.push({ label: `C${cal} Real`, data: grupos[cal], borderColor: color, tension: 0.2 });
+                const obj = reglasObjetivo.find(r => parseInt(cal) >= r.desde && parseInt(cal) <= r.hasta);
+                if(obj) datasets.push({ label: `C${cal} Obj`, data: Array(grupos[cal].length).fill(obj.objetivo), borderColor: color, borderDash:[5,5], pointRadius:0 });
             });
 
-            if (grafico) grafico.destroy();
-            grafico = new Chart(ctx, {
-                type: "line", data: { labels, datasets },
-                options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { beginAtZero: false } } }
-            });
+            if(grafico) grafico.destroy();
+            grafico = new Chart(ctx, { type: 'line', data: { labels: Array.from({length: 20}, (_,i)=>i+1), datasets }, options: { responsive: true, maintainAspectRatio: false }});
         }
 
         function cargarRegistros() {
-            if (cargando) return;
-            cargando = true;
-            Promise.all([
-                fetch(SCRIPT_URL + "?t=" + new Date().getTime()).then(res => res.json()),
-                cargarObjetivosDesdeServidor()
-            ]).then(([data]) => {
+            if (cargando) return; cargando = true;
+            fetch(SCRIPT_URL + "?t=" + Date.now()).then(res => res.json()).then(data => {
                 const filtrados = filtrarRegistrosPorDia(data);
                 actualizarTabla(filtrados);
                 actualizarGrafico(filtrados);
-                estadoSync.innerText = "Sincronizado: " + new Date().toLocaleTimeString();
-            }).catch(err => {
-                estadoSync.innerText = "Error de conexión";
-            }).finally(() => { cargando = false; });
+                document.getElementById("estadoSync").innerText = "Sincronizado: " + new Date().toLocaleTimeString();
+            }).finally(() => cargando = false);
         }
 
-        function actualizarGraficoDesdeFiltro() {
-            cargarRegistros();
-        }
-
-        function limpiarFormulario() {
-            document.getElementById("form").reset();
-            document.getElementById("operador").value = operadorData.operador;
-        }
-
-        function iniciarAutoRefresh() {
-            if (autoRefresh) clearInterval(autoRefresh);
-            autoRefresh = setInterval(() => { if (!cargando) cargarRegistros(); }, 5000);
-        }
-
-        window.addEventListener("load", () => {
-            iniciarAutoRefresh();
-            cargarRegistros(); 
-        });
+        function actualizarGraficoDesdeFiltro() { cargarRegistros(); }
+        function limpiarFormulario() { document.getElementById("form").reset(); document.getElementById("operador").value = operadorData.operador; }
 
         function ingresarOperador() {
-            const n = document.getElementById("nombreOperador").value.trim();
-            const c = document.getElementById("claveOperador").value.trim();
-            if (c === "fresh") {
+            const n = document.getElementById("nombreOperador").value;
+            if (document.getElementById("claveOperador").value === "fresh") {
                 operadorData.operador = n;
                 document.getElementById("operador").value = n;
                 document.getElementById("loginCard").classList.add("hidden");
                 document.getElementById("formCard").classList.remove("hidden");
                 document.getElementById("objetivosCard").classList.remove("hidden");
-                renderTablaObjetivos();
-            } else {
-                document.getElementById("msgLogin").innerText = "Clave incorrecta";
-            }
+                cargarMaestro().then(cargarObjetivosDesdeServidor).then(cargarRegistros);
+                setInterval(cargarRegistros, 10000);
+            } else { alert("Clave incorrecta"); }
         }
 
         document.getElementById("form").addEventListener("submit", function (e) {
@@ -485,15 +407,13 @@
                 lote: document.getElementById("lote").value,
                 peso: document.getElementById("peso").value
             };
-            fetch(SCRIPT_URL, { method: "POST", body: new URLSearchParams(data) })
-                .then(res => res.json())
-                .then(() => {
-                    document.getElementById("msg").innerText = "Guardado!";
-                    document.getElementById("calibre").value = "";
-                    document.getElementById("peso").value = "";
-                    setTimeout(() => { document.getElementById("msg").innerText = ""; }, 1500);
-                    cargarRegistros();
-                });
+            fetch(SCRIPT_URL, { method: "POST", body: new URLSearchParams(data) }).then(() => {
+                document.getElementById("msg").innerText = "¡Guardado!";
+                document.getElementById("calibre").value = "";
+                document.getElementById("peso").value = "";
+                setTimeout(() => document.getElementById("msg").innerText = "", 1500);
+                cargarRegistros();
+            });
         });
     </script>
 </body>
